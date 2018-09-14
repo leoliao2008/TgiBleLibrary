@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.DevicesListActivity"
+    android:orientation="vertical">
+    <ListView
+        android:id="@+id/activity_devices_list_lv"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+    <ToggleButton
+        android:id="@+id/activity_devices_list_tgbtn_scan"
+        android:textAllCaps="false"
+        android:textOn="Status:Scanning..."
+        android:textOff="Status:Scanning Off"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>
