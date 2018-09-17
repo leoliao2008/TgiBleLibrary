@@ -43,11 +43,11 @@ public class BleClientModel extends BaseBtModel {
         btGatt.close();
     }
 
-    public void readCharacteristic(BluetoothGatt bluetoothGatt, BluetoothGattCharacteristic btChar) {
-        bluetoothGatt.readCharacteristic(btChar);
+    public boolean readCharacteristic(BluetoothGatt bluetoothGatt, BluetoothGattCharacteristic btChar) {
+        return bluetoothGatt.readCharacteristic(btChar);
     }
 
-    public void readDescriptor(BluetoothGatt bluetoothGatt, BluetoothGattDescriptor descriptor) {
-        bluetoothGatt.readDescriptor(descriptor);
+    public boolean readDescriptor(BluetoothGatt bluetoothGatt, BluetoothGattDescriptor descriptor) {
+        return bluetoothGatt.readDescriptor(descriptor);
     }
 }

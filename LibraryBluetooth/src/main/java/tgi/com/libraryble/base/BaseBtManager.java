@@ -30,7 +30,7 @@ public abstract class BaseBtManager<MODEL extends BaseBtModel, HANDLER extends B
             if (!mBtModel.isBtEnable(btAdapter)) {
                 mBtModel.enableBt(context);
             } else {
-                mBluetoothAdapter = mBtModel.getBtAdapter(context);
+                mBluetoothAdapter = btAdapter;
             }
         }
     }

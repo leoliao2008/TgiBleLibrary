@@ -66,8 +66,12 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
     };
     private BluetoothGatt mBluetoothGatt;
     private Handler mHandler;
-
-
+    private Runnable mRunnableStopScanning = new Runnable() {
+        @Override
+        public void run() {
+            stopScanningDevice();
+        }
+    };
 
 
     public BleClientManager(Activity context,BleClientEventHandler eventHandler) {
@@ -93,12 +97,7 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
         new Thread(new Runnable() {
             @Override
             public void run() {
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        stopScanningDevice();
-                    }
-                },5000);
+                mHandler.postDelayed(mRunnableStopScanning,5000);
                 mBtModel.startScanningLeDevice(mBluetoothAdapter, mBleDeviceScanCallback);
                 showLog("Scanning...");
             }
@@ -108,6 +107,7 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
     public void stopScanningDevice() {
         showLog("Stop Scanning.");
         mBtModel.stopScanningLeDevice(mBluetoothAdapter, mBleDeviceScanCallback);
+        mHandler.removeCallbacks(mRunnableStopScanning);
     }
 
     public void connectToDevice(Context context,String deviceAddress){
@@ -123,6 +123,7 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
                 if (status == GATT_SUCCESS && newState == STATE_CONNECTED) {
+                    showLog("Device Connect Success!");
                     mBluetoothGatt.discoverServices();
                 }
             }
@@ -130,13 +131,18 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
+                showLog("Services Discover:");
                 List<BluetoothGattService> services = mBluetoothGatt.getServices();
+                for(BluetoothGattService s:services){
+                    showLog(s.getUuid().toString());
+                }
                 mEventHandler.onServiceListUpdate(services);
             }
 
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
+                showLog("Char read.");
                 mEventHandler.onCharacteristicRead(characteristic);
             }
 
@@ -177,12 +183,12 @@ public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEven
         });
     }
 
-    public void readCharacteristic(BluetoothGattCharacteristic btChar){
-        mBtModel.readCharacteristic(mBluetoothGatt,btChar);
+    public boolean readCharacteristic(BluetoothGattCharacteristic btChar){
+        return mBtModel.readCharacteristic(mBluetoothGatt,btChar);
     }
 
-    public void readDescriptor(BluetoothGattDescriptor descriptor){
-        mBtModel.readDescriptor(mBluetoothGatt,descriptor);
+    public boolean readDescriptor(BluetoothGattDescriptor descriptor){
+        return mBtModel.readDescriptor(mBluetoothGatt,descriptor);
     }
 
 

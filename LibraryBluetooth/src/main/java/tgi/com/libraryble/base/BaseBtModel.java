@@ -11,31 +11,29 @@ import tgi.com.libraryble.LibraryBtConstants;
 
 
 public class BaseBtModel {
-    public boolean isBtSupported(Context context){
+    public boolean isBtSupported(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
     }
 
-    public BluetoothAdapter getBtAdapter(Context context){
-        BluetoothAdapter adapter=null;
+    public BluetoothAdapter getBtAdapter(Context context) {
+        BluetoothAdapter adapter = null;
         BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         try {
-            adapter=manager.getAdapter();
-        }catch (NullPointerException e){
+            adapter = manager.getAdapter();
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
         return adapter;
     }
 
     public boolean isBtEnable(BluetoothAdapter adapter) {
-        return adapter == null || !adapter.isEnabled();
+        return adapter != null && adapter.isEnabled();
     }
 
-    public void enableBt(Activity activity){
+    public void enableBt(Activity activity) {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         activity.startActivityForResult(enableBtIntent, LibraryBtConstants.REQUEST_ENABLE_BT);
     }
-
-
 
 
 }
