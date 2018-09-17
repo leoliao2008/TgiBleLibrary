@@ -12,10 +12,9 @@ public class BaseBtEventHandler {
 
     }
 
-    public void onScanDevice(BluetoothDevice device, int rssi, byte[] scanRecord) {
+    public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
 
     }
-
 
 
     public void onError(String msg) {
@@ -26,11 +25,11 @@ public class BaseBtEventHandler {
 
     }
 
-    public void onScanStart() {
+    public void onStartScanningDevice() {
 
     }
 
-    public void onScanStop() {
+    public void onStopScanningDevice() {
 
     }
 }

@@ -11,7 +11,7 @@ import tgi.com.libraryble.base.BaseBtEventHandler;
 public class BleClientEventHandler extends BaseBtEventHandler {
 
 
-    public void onBtBleNotSupported() {
+    public void onBleNotSupported() {
 
     }
 

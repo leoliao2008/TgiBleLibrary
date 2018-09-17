@@ -91,6 +91,18 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
             }
         });
 
+        mExplvServicesList.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int groupPosition) {
+                int size = mServicesList.size();
+                for(int i=0;i<size;i++){
+                    if(i!=groupPosition){
+                        mExplvServicesList.collapseGroup(i);
+                    }
+                }
+            }
+        });
+
         mTgbtnDataFormat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
