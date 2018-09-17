@@ -27,6 +27,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Device Address:"/>
+            <ToggleButton
+                android:id="@+id/activity_service_list_tgbtn_data_format"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textOff="Current: Display Data in String Format"
+                android:textOn="Current: Display Data in Hex Format"
+                android:textAllCaps="false"/>
             <TextView
                 android:id="@+id/activity_service_list_tv_char_data"
                 android:padding="@dimen/dp_10"
