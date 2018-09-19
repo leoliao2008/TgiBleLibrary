@@ -4,24 +4,23 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.manager.BleClientManager;
+import tgi.com.libraryble.manager.BleClientManagerBeta;
 import tgi.com.tgifreertobtdemo.R;
 import tgi.com.tgifreertobtdemo.adapters.ServicesListAdapter;
 import tgi.com.tgifreertobtdemo.iViews.ShowServicesListView;
@@ -33,13 +32,13 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
     private ProgressDialog mProgressDialog;
     private TextView mTvDevName;
     private TextView mTvDevAddress;
-    private TextView mTvData;
-    private BleClientManager mBleClientManager;
+//    private TextView mTvData;
+    private BleClientManagerBeta mBleClientManagerBeta;
     private ArrayList<BluetoothGattService> mServicesList = new ArrayList<>();
     private ServicesListAdapter mAdapter;
     private ExpandableListView mExplvServicesList;
     private String mDevAddress;
-    private ToggleButton mTgbtnDataFormat;
+//    private ToggleButton mTgbtnDataFormat;
     private byte[] mCharData;
 
     public static void start(Context context, String deviceName, String deviceAddress) {
@@ -56,9 +55,9 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
 
         mTvDevName = findViewById(R.id.activity_service_list_tv_device_name);
         mTvDevAddress = findViewById(R.id.activity_service_list_tv_device_address);
-        mTvData = findViewById(R.id.activity_service_list_tv_char_data);
+//        mTvData = findViewById(R.id.activity_service_list_tv_char_data);
         mExplvServicesList = findViewById(R.id.activity_service_list_explv_service_list);
-        mTgbtnDataFormat =findViewById(R.id.activity_service_list_tgbtn_data_format);
+//        mTgbtnDataFormat =findViewById(R.id.activity_service_list_tgbtn_data_format);
 
 
         mDevAddress = getIntent().getStringExtra(DEVICE_ADDRESS);
@@ -69,7 +68,8 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
         initServicesList();
         initListeners();
 
-        mBleClientManager.connectToDevice(
+        showProgressDialog();
+        mBleClientManagerBeta.connectToDevice(
                 this,
                 mDevAddress
         );
@@ -81,12 +81,12 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
                 BluetoothGattCharacteristic characteristic = mServicesList.get(groupPosition).getCharacteristics().get(childPosition);
-                boolean b = mBleClientManager.readCharacteristic(characteristic);
-                if(b){
-                    Log.e("readCharacteristic", "success");
-                }else {
-                    showToast("This Characteristic is not readable.");
-                }
+                BtCharActivity.start(
+                        ServiceListActivity.this,
+                        characteristic.getService().getUuid().toString(),
+                        characteristic.getUuid().toString(),
+                        "00002222-0000-1000-8000-00805F9B34FB"
+                );
                 return true;
             }
         });
@@ -103,15 +103,15 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
             }
         });
 
-        mTgbtnDataFormat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(mCharData==null){
-                    return;
-                }
-                updateData(mCharData);
-            }
-        });
+//        mTgbtnDataFormat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                if(mCharData==null){
+//                    return;
+//                }
+//                updateData(mCharData);
+//            }
+//        });
     }
 
     private void initServicesList() {
@@ -120,26 +120,27 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
     }
 
     private void initBtManager() {
-        mBleClientManager = new BleClientManager(
+        mBleClientManagerBeta = new BleClientManagerBeta(
                 this,
                 new BleClientEventHandler() {
                     @Override
                     public void onServiceListUpdate(List<BluetoothGattService> services) {
                         super.onServiceListUpdate(services);
+                        dismissProgressDialog();
                         updateExpListView(services);
                     }
 
-                    @Override
-                    public void onCharacteristicRead(BluetoothGattCharacteristic characteristic) {
-                        super.onCharacteristicRead(characteristic);
-                        byte[] value = characteristic.getValue();
-                        if(value!=null){
-                            updateData(value);
-                        }else {
-                            showToast("no data is available.");
-                        }
-
-                    }
+//                    @Override
+//                    public void onCharacteristicRead(BluetoothGattCharacteristic characteristic) {
+//                        super.onCharacteristicRead(characteristic);
+//                        byte[] value = characteristic.getValue();
+//                        if(value!=null){
+//                            updateData(value);
+//                        }else {
+//                            showToast("no data is available.");
+//                        }
+//
+//                    }
 
                     @Override
                     public void onError(String msg) {
@@ -158,27 +159,28 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
                 mExplvServicesList.setAdapter((ExpandableListAdapter) null);
                 mServicesList.clear();
                 mServicesList.addAll(services);
-                mAdapter=new ServicesListAdapter(ServiceListActivity.this,mServicesList);
-                mExplvServicesList.setAdapter(mAdapter);
+//                mAdapter=new ServicesListAdapter(ServiceListActivity.this,mServicesList);
+//                mExplvServicesList.setAdapter(mAdapter);
+                initServicesList();
             }
         });
     }
 
     @Override
     public void updateData(final byte[] data) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mCharData=data;
-                String text;
-                if(mTgbtnDataFormat.isChecked()){
-                    text=toHexString(data);
-                }else {
-                    text=toAscString(data);
-                }
-                mTvData.setText("Data: "+text);
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                mCharData=data;
+//                String text;
+//                if(mTgbtnDataFormat.isChecked()){
+//                    text=toHexString(data);
+//                }else {
+//                    text=toAscString(data);
+//                }
+//                mTvData.setText("Data: "+text);
+//            }
+//        });
 
     }
 
@@ -200,7 +202,13 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
                 null,
                 null,
                 true,
-                false);
+                true);
+        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                mBleClientManagerBeta.disconnectDeviceIfAny();
+            }
+        });
 
     }
 
@@ -213,7 +221,7 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
 
     @Override
     protected void onDestroy() {
-        mBleClientManager.onDestroy();
+        mBleClientManagerBeta.disconnectDeviceIfAny();
         super.onDestroy();
     }
 

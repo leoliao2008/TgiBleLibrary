@@ -7,20 +7,32 @@ import android.database.DataSetObserver;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ExpandableListAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import tgi.com.tgifreertobtdemo.R;
 
 public class ServicesListAdapter implements ExpandableListAdapter {
     private Context mContext;
     private ArrayList<BluetoothGattService> mList;
+    private HashMap<BluetoothGattCharacteristic, Boolean> mNotificationSetting;
 
     public ServicesListAdapter(Context context, ArrayList<BluetoothGattService> list) {
         mContext = context;
         mList = list;
+        mNotificationSetting =new HashMap<>();
+        for(BluetoothGattService service:mList){
+            List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+            for(BluetoothGattCharacteristic btChar:characteristics){
+                mNotificationSetting.put(btChar,false);
+            }
+        }
     }
 
 
@@ -98,9 +110,18 @@ public class ServicesListAdapter implements ExpandableListAdapter {
         }else {
             vh= (ChildViewHolder) convertView.getTag();
         }
-        BluetoothGattCharacteristic characteristic = mList.get(groupPosition).getCharacteristics().get(childPosition);
+        final BluetoothGattCharacteristic characteristic = mList.get(groupPosition).getCharacteristics().get(childPosition);
         vh.mTvCharName.setText("Unknown Characteristic Name");
         vh.mTvCharUUID.setText(characteristic.getUuid().toString());
+//        vh.mCbxNotification.setOnCheckedChangeListener(null);
+//        vh.mCbxNotification.setChecked(mNotificationSetting.get(characteristic));
+//        vh.mCbxNotification.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                mNotificationSetting.put(characteristic,isChecked);
+//                mListener.toggleNotification(characteristic,isChecked);
+//            }
+//        });
         return convertView;
     }
 
@@ -152,10 +173,12 @@ public class ServicesListAdapter implements ExpandableListAdapter {
     class ChildViewHolder {
         private TextView mTvCharName;
         private TextView mTvCharUUID;
+//        private CheckBox mCbxNotification;
 
         public ChildViewHolder(View convertView) {
             mTvCharName = convertView.findViewById(R.id.adapter_services_list_child_tv_char_name);
             mTvCharUUID = convertView.findViewById(R.id.adapter_services_list_child_tv_char_uuid);
+//            mCbxNotification=convertView.findViewById(R.id.adapter_services_list_child_cbx_notification);
         }
     }
 }

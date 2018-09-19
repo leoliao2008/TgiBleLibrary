@@ -53,6 +53,7 @@ public class DevicesListAdapter extends BaseAdapter {
             name="Unknown Device";
         }
         vh.mTvName.setText(name);
+        device.getUuids();
         vh.mTvAddress.setText(device.getAddress());
         return convertView;
     }

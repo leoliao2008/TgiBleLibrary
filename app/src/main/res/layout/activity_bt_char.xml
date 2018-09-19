@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.BtCharActivity"
+    android:orientation="vertical"
+    android:padding="@dimen/dp_5">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/dp_4"
+            android:gravity="end">
+            <TextView
+                android:id="@+id/activity_bt_char_tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Name: Unknown Characteristic"
+                android:textSize="@dimen/sp_15"
+                android:textColor="@android:color/black"/>
+
+            <TextView
+                android:id="@+id/activity_bt_char_tv_uuid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="UUID:"/>
+
+            <Switch
+                android:id="@+id/activity_bt_char_swt_notification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Register Notification"
+                />
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+    <ListView
+        android:id="@+id/activity_bt_char_lv_console"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:onClick="readData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Hello World"/>
+    <Button
+        android:onClick="writeData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Hello World"/>
+
+</LinearLayout>

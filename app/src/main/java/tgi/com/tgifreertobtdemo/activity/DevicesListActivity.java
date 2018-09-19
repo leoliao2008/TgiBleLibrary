@@ -17,7 +17,7 @@ import android.widget.ToggleButton;
 import java.util.ArrayList;
 
 import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.manager.BleClientManager;
+import tgi.com.libraryble.manager.BleClientManagerBeta;
 import tgi.com.tgifreertobtdemo.R;
 import tgi.com.tgifreertobtdemo.adapters.DevicesListAdapter;
 import tgi.com.tgifreertobtdemo.iViews.ShowDevicesListView;
@@ -28,7 +28,7 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
     private DevicesListAdapter mAdapter;
     private ArrayList<BluetoothDevice> mDevices=new ArrayList<>();
     private ProgressDialog mProgressDialog;
-    private BleClientManager mBleClientManager;
+    private BleClientManagerBeta mBleClientManagerBeta;
 
     public static void start(Context context) {
         Intent starter = new Intent(context, DevicesListActivity.class);
@@ -49,7 +49,7 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
     }
 
     private void initBtManager() {
-        mBleClientManager=new BleClientManager(
+        mBleClientManagerBeta =new BleClientManagerBeta(
                 this,
                 new BleClientEventHandler(){
                     @Override
@@ -74,28 +74,28 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
                     }
 
                     @Override
-                    public void onBtBleNotSupported() {
-                        super.onBtBleNotSupported();
+                    public void onBleNotSupported() {
+                        super.onBleNotSupported();
                         showToast("Ble is not supported in this devices.");
                         finish();
                     }
 
                     @Override
-                    public void onScanStart() {
-                        super.onScanStart();
+                    public void onStartScanningDevice() {
+                        super.onStartScanningDevice();
                         mTgbtnScan.setChecked(true);
                         showProgressDialogScanning();
                     }
 
                     @Override
-                    public void onScanDevice(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                        super.onScanDevice(device, rssi, scanRecord);
+                    public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                        super.onDeviceScanned(device, rssi, scanRecord);
                         updateDeviceList(device);
                     }
 
                     @Override
-                    public void onScanStop() {
-                        super.onScanStop();
+                    public void onStopScanningDevice() {
+                        super.onStopScanningDevice();
                         mTgbtnScan.setChecked(false);
                         dismissProgressDialogScanning();
                         showToast("Scan Stops.");
@@ -121,9 +121,9 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
             @Override
             public void onClick(View v) {
                 if(mTgbtnScan.isChecked()){
-                    mBleClientManager.startScanningDevice();
+                    mBleClientManagerBeta.startScanningDevice();
                 }else {
-                    mBleClientManager.stopScanningDevice();
+                    mBleClientManagerBeta.stopScanningDevice();
                 }
             }
         });
@@ -148,7 +148,7 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
                 mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialog) {
-                        mBleClientManager.stopScanningDevice();
+                        mBleClientManagerBeta.stopScanningDevice();
                     }
                 });
             }
@@ -202,13 +202,13 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mBleClientManager.onActivityResult(requestCode,resultCode,data);
+        mBleClientManagerBeta.onActivityResult(requestCode,resultCode,data);
         super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
     protected void onDestroy() {
-        mBleClientManager.onDestroy();
+        mBleClientManagerBeta.disconnectDeviceIfAny();
         dismissProgressDialogScanning();
         super.onDestroy();
     }

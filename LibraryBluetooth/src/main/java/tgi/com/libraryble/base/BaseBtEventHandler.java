@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothGattService;
 
 import java.util.List;
 
+import tgi.com.libraryble.bean.BleDevice;
+
 public class BaseBtEventHandler {
 
     public void onUserRefusesToEnableBt() {
@@ -13,6 +15,10 @@ public class BaseBtEventHandler {
     }
 
     public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
+
+    }
+
+    public void onDeviceScanned(String deviceName,String deviceAddress) {
 
     }
 
@@ -30,6 +36,14 @@ public class BaseBtEventHandler {
     }
 
     public void onStopScanningDevice() {
+
+    }
+
+    public void onDeviceConnected() {
+
+    }
+
+    public void onDeviceDisconnected() {
 
     }
 }

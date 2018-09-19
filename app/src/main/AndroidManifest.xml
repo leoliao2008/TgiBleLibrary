@@ -25,7 +25,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.DevicesListActivity" />
-        <activity android:name=".activity.ServiceListActivity"></activity>
+        <activity android:name=".activity.ServiceListActivity" />
+        <activity android:name=".activity.BtCharActivity"></activity>
     </application>
 
 </manifest>

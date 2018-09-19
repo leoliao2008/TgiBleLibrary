@@ -6,8 +6,11 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.pm.PackageManager;
+
+import java.util.UUID;
 
 import tgi.com.libraryble.base.BaseBtModel;
 import tgi.com.libraryble.callbacks.BleDeviceScanCallback;
@@ -43,11 +46,34 @@ public class BleClientModel extends BaseBtModel {
         btGatt.close();
     }
 
+
+    public BluetoothGattCharacteristic getBluetoothGattCharacteristic(BluetoothGattService service, String btCharUUID){
+        return service.getCharacteristic(UUID.fromString(btCharUUID));
+    }
+
     public boolean readCharacteristic(BluetoothGatt bluetoothGatt, BluetoothGattCharacteristic btChar) {
         return bluetoothGatt.readCharacteristic(btChar);
     }
 
+    public BluetoothGattDescriptor getDescriptor(BluetoothGattCharacteristic btChar,String descriptorUUID){
+        return btChar.getDescriptor(UUID.fromString(descriptorUUID));
+    }
+
     public boolean readDescriptor(BluetoothGatt bluetoothGatt, BluetoothGattDescriptor descriptor) {
         return bluetoothGatt.readDescriptor(descriptor);
+    }
+
+    public boolean toggleNotification(BluetoothGatt bluetoothGatt, boolean isToEnable,BluetoothGattDescriptor descriptor){
+        if(isToEnable){
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        }else {
+            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+        }
+        return bluetoothGatt.writeDescriptor(descriptor);
+    }
+
+    public boolean writeCharacteristic(BluetoothGatt bluetoothGatt,BluetoothGattCharacteristic btChar, byte[] value) {
+        btChar.setValue(value);
+        return bluetoothGatt.writeCharacteristic(btChar);
     }
 }

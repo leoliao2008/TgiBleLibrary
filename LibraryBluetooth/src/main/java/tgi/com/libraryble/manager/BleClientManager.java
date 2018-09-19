@@ -1,223 +1,76 @@
 package tgi.com.libraryble.manager;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
+import android.content.Intent;
+import android.content.IntentFilter;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.LongBinaryOperator;
 
-import tgi.com.libraryble.base.BaseBtManager;
+import tgi.com.libraryble.LibraryBtConstants;
+import tgi.com.libraryble.bean.BleDevice;
 import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.callbacks.BleDeviceScanCallback;
-import tgi.com.libraryble.models.BleClientModel;
+import tgi.com.libraryble.service.BleBackgroundService;
 
-import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
-import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
+public class BleClientManager {
+    private BleClientEventHandler mEventHandler;
+    private BleClientManagerBroadcastReceiver mReceiver;
 
-/**
- * Bluetooth low energy client manager.
- * This class is developed according to Google official API guide.
- * <a href="https://developer.android.google.cn/guide/topics/connectivity/bluetooth-le">Official Link.</a>
- * Use this class instead of the over-built Google APIs.
- */
-public class BleClientManager extends BaseBtManager<BleClientModel,BleClientEventHandler> {
-    private BleDeviceScanCallback mBleDeviceScanCallback = new BleDeviceScanCallback() {
+    public BleClientManager(Activity activity, BleClientEventHandler eventHandler) {
+        mEventHandler = eventHandler;
+        Intent intent = new Intent(activity, BleBackgroundService.class);
+        activity.startService(intent);
+    }
+
+    public void onResume(Activity activity) {
+        mReceiver = new BleClientManagerBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter(LibraryBtConstants.ACTION_BLE_ACTIVITY_UPDATE);
+        activity.registerReceiver(mReceiver, intentFilter);
+    }
+
+    public void scannDevices(Activity activity) {
+        Intent intent = new Intent(LibraryBtConstants.REQUEST_SCAN_DEVICE);
+        activity.sendBroadcast(intent);
+    }
+
+    public void onStop(Activity activity) {
+        if (mReceiver != null) {
+            activity.unregisterReceiver(mReceiver);
+            mReceiver = null;
+        }
+    }
+
+    private class BleClientManagerBroadcastReceiver extends BroadcastReceiver {
+
         @Override
-        public void onScanStart() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
+        public void onReceive(Context context, Intent intent) {
+            String event = intent.getStringExtra(LibraryBtConstants.KEY_BLE_EVENT);
+            switch (event) {
+                case LibraryBtConstants.EVENT_SCAN_STARTS:
                     mEventHandler.onStartScanningDevice();
-                }
-            });
-        }
-
-        @Override
-        public void onScanStop() {
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
+                    break;
+                case LibraryBtConstants.EVENT_SCAN_STOPS:
                     mEventHandler.onStopScanningDevice();
+                    break;
+                case LibraryBtConstants.EVENT_DEVICE_SCAN: {
+                    String name = intent.getStringExtra(LibraryBtConstants.KEY_BLE_DEVICE_NAME);
+                    String address = intent.getStringExtra(LibraryBtConstants.KEY_BLE_DEVICE_ADDRESS);
+                    mEventHandler.onDeviceScanned(name, address);
                 }
-            });
-        }
-
-        @Override
-        public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-            if(device!=null&&device.getName()!=null){
-                showLog(device.getName());
-            }else {
-                showLog("Unknown Device");
+                break;
+                case LibraryBtConstants.EVENT_DEVICE_CONNECTED:
+                    mEventHandler.onDeviceConnected();
+                    break;
+                case LibraryBtConstants.EVENT_DEVICE_DISCONNECT:
+                    mEventHandler.onDeviceDisconnected();
+                    break;
             }
-            mHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mEventHandler.onDeviceScanned(device, rssi, scanRecord);
-                }
-            });
-        }
-    };
-    private BluetoothGatt mBluetoothGatt;
-    private Handler mHandler;
-    private Runnable mRunnableStopScanning = new Runnable() {
-        @Override
-        public void run() {
-            stopScanningDevice();
-        }
-    };
 
 
-    public BleClientManager(Activity context,BleClientEventHandler eventHandler) {
-        super(context,eventHandler);
-        if (Looper.myLooper() == null) {
-            Looper.prepare();
-            Looper.loop();
-        }
-        mHandler = new Handler(Looper.myLooper());
-        if (!mBtModel.hasBleFeature(context)) {
-            mEventHandler.onBleNotSupported();
         }
     }
 
-
-    @Override
-    protected BleClientModel setBtModel() {
-        return new BleClientModel();
-    }
-
-
-    public void startScanningDevice() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mHandler.postDelayed(mRunnableStopScanning,5000);
-                mBtModel.startScanningLeDevice(mBluetoothAdapter, mBleDeviceScanCallback);
-                showLog("Scanning...");
-            }
-        }).start();
-    }
-
-    public void stopScanningDevice() {
-        showLog("Stop Scanning.");
-        mBtModel.stopScanningLeDevice(mBluetoothAdapter, mBleDeviceScanCallback);
-        mHandler.removeCallbacks(mRunnableStopScanning);
-    }
-
-    public void connectToDevice(Context context,String deviceAddress){
-        BluetoothDevice device = mBtModel.getBluetoothDevice(mBluetoothAdapter, deviceAddress);
-        connectToDevice(context,device);
-    }
-
-    public void connectToDevice(Context context, BluetoothDevice device) {
-        disconnectDeviceIfAny();
-        mBluetoothGatt = mBtModel.connectToLeDevice(context, device, new BluetoothGattCallback() {
-
-            @Override
-            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-                super.onConnectionStateChange(gatt, status, newState);
-                if (status == GATT_SUCCESS && newState == STATE_CONNECTED) {
-                    showLog("Device Connect Success!");
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mBluetoothGatt.discoverServices();
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-                super.onServicesDiscovered(gatt, status);
-                showLog("Services Discover:");
-                final List<BluetoothGattService> services = mBluetoothGatt.getServices();
-                for(BluetoothGattService s:services){
-                    showLog(s.getUuid().toString());
-                }
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mEventHandler.onServiceListUpdate(services);
-                    }
-                });
-
-            }
-
-            @Override
-            public void onCharacteristicRead(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
-                super.onCharacteristicRead(gatt, characteristic, status);
-                showLog("Char read.");
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mEventHandler.onCharacteristicRead(characteristic);
-                    }
-                });
-
-            }
-
-            @Override
-            public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                super.onCharacteristicWrite(gatt, characteristic, status);
-            }
-
-            @Override
-            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                super.onCharacteristicChanged(gatt, characteristic);
-            }
-
-            @Override
-            public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                super.onDescriptorRead(gatt, descriptor, status);
-            }
-
-            @Override
-            public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-                super.onDescriptorWrite(gatt, descriptor, status);
-            }
-
-            @Override
-            public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-                super.onReliableWriteCompleted(gatt, status);
-            }
-
-            @Override
-            public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-                super.onReadRemoteRssi(gatt, rssi, status);
-            }
-
-            @Override
-            public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-                super.onMtuChanged(gatt, mtu, status);
-            }
-        });
-    }
-
-    public boolean readCharacteristic(BluetoothGattCharacteristic btChar){
-        return mBtModel.readCharacteristic(mBluetoothGatt,btChar);
-    }
-
-    public boolean readDescriptor(BluetoothGattDescriptor descriptor){
-        return mBtModel.readDescriptor(mBluetoothGatt,descriptor);
-    }
-
-
-    public void onDestroy(){
-        disconnectDeviceIfAny();
-    }
-
-    private void disconnectDeviceIfAny(){
-        if(mBluetoothGatt!=null){
-            mBtModel.disconnectLeDevice(mBluetoothGatt);
-            mBluetoothGatt=null;
-        }
-    }
 
 }

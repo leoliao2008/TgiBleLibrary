@@ -24,4 +24,9 @@ public class BleClientEventHandler extends BaseBtEventHandler {
     }
 
 
+    public void onReceiveNotification(BluetoothGattCharacteristic characteristic) {
+
+    }
+
+
 }
