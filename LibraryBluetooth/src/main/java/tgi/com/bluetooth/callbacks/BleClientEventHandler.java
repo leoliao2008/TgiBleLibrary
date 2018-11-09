@@ -23,11 +23,11 @@ public class BleClientEventHandler {
     }
 
 
-    public void onEnableNotification(boolean isSuccess, String uuid) {
+    public void onEnableNotification(boolean isSuccess, String descUuid) {
 
     }
 
-    public void onDisableNotification(boolean isSuccess, String uuid) {
+    public void onDisableNotification(boolean isSuccess, String descUuid) {
 
     }
 

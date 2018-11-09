@@ -5,19 +5,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.DevicesListActivity"
+    tools:context=".activity.DeviceListActivity"
     android:orientation="vertical">
+
     <ListView
-        android:id="@+id/activity_devices_list_lv"
+        android:id="@+id/activity_devices_list_list_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
-    <ToggleButton
-        android:id="@+id/activity_devices_list_tgbtn_scan"
+
+    <Button
+        android:text="Scan Devices"
         android:textAllCaps="false"
-        android:textOn="Status:Scanning..."
-        android:textOff="Status:Scanning Off"
+        android:onClick="scanDevices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
 
 </LinearLayout>

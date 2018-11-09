@@ -8,11 +8,6 @@
     tools:context=".activity.MainActivity"
     android:orientation="vertical">
 
-    <Button
-        android:onClick="toBleDemo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="BT Demo1-Connect to Echo Server"
-        android:textAllCaps="false"/>
+
 
 </LinearLayout>

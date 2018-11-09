@@ -1,6 +1,7 @@
 package tgi.com.bluetooth.manager;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import tgi.com.bluetooth.BtLibConstants;
 import tgi.com.bluetooth.callbacks.BleClientEventHandler;
@@ -26,11 +28,19 @@ public class BleClientManager {
     private BleClientManagerBroadcastReceiver mReceiver;
     private static BleClientManager bleClientManager;
 
+    private BleClientManager() {
+    }
+
     public synchronized static BleClientManager getInstance() {
         if (bleClientManager == null) {
             bleClientManager = new BleClientManager();
         }
         return bleClientManager;
+    }
+
+    public void turnOnBt(Activity activity){
+        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        activity.startActivityForResult(intent,REQUEST_ENABLE_BT);
     }
 
     public void onResume(Activity activity, BleClientEventHandler eventHandler) {
@@ -109,8 +119,8 @@ public class BleClientManager {
         context.sendBroadcast(intent);
     }
 
-    public void killLibraryService(Context context){
-        sendBroadcast(context, REQUEST_KILL_LIBRARY_SERVICE);
+    public void killBleBgService(Context context){
+        sendBroadcast(context, REQUEST_KILL_BLE_BG_SERVICE);
     }
 
     /**
@@ -148,20 +158,17 @@ public class BleClientManager {
                 case BtLibConstants.EVENT_BT_NOT_ENABLE://ok
                     mEventHandler.onBtNotEnabled();
                     break;
-                case EVENT_SCAN_STARTS://ok
-                    showLog("onStartScanningDevice");
+                case EVENT_DEVICES_SCANNING_STARTS://ok
                     mEventHandler.onStartScanningDevice();
                     break;
-                case EVENT_SCAN_STOPS://ok
-                    showLog("onStopScanningDevice");
+                case EVENT_DEVICES_SCANNING_STOPS://ok
                     mEventHandler.onStopScanningDevice();
                     break;
-                case EVENT_DEVICE_IS_SCANNED: {//ok
-                    showLog("onDeviceScanned");
+                case EVENT_A_DEVICE_IS_SCANNED: {//ok
                     BluetoothDevice device=intent.getParcelableExtra(KEY_BT_DEVICE);
                     int rssi=intent.getIntExtra(KEY_BT_RSSI,-1);
                     byte[] scanRecord=intent.getByteArrayExtra(KEY_SCAN_RECORD);
-                    mEventHandler.onDeviceScanned(device,rssi, scanRecord);
+                    mEventHandler.onDeviceScanned(device,rssi,scanRecord);
                     break;
                 }
                 case EVENT_DEVICE_CONNECTED://ok

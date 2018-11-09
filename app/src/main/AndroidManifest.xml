@@ -24,10 +24,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.DevicesListActivity" />
-        <activity android:name=".activity.ServiceListActivity" />
-        <activity android:name=".activity.BtCharActivity"></activity>
-        <service android:name="tgi.com.bluetooth.service.BleBackgroundService"/>
+
+        <service android:name="tgi.com.bluetooth.service.BleBackgroundService" />
+
+        <activity android:name=".activity.DeviceListActivity"></activity>
     </application>
 
 </manifest>

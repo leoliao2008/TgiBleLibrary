@@ -24,10 +24,6 @@ import java.util.List;
 import java.util.UUID;
 
 import tgi.com.bluetooth.BtLibConstants;
-import tgi.com.bluetooth.bean.BleCharacteristic;
-import tgi.com.bluetooth.bean.BleDescriptor;
-import tgi.com.bluetooth.bean.BleDevice;
-import tgi.com.bluetooth.bean.BleService;
 import tgi.com.bluetooth.callbacks.BleDeviceScanCallback;
 import tgi.com.bluetooth.models.BleClientModel;
 
@@ -55,21 +51,21 @@ public class BleBackgroundService extends Service {
     private BleDeviceScanCallback mScanCallback = new BleDeviceScanCallback() {
         @Override
         public void onScanStart() {
-            sendBroadcast(genSimpleIntent(EVENT_SCAN_STARTS));
+            sendBroadcast(genSimpleIntent(EVENT_DEVICES_SCANNING_STARTS));
             mHandler.postDelayed(mRunnableStopScanning, 5000);
             isScanning=true;
         }
 
         @Override
         public void onScanStop() {
-            sendBroadcast(genSimpleIntent(EVENT_SCAN_STOPS));
+            sendBroadcast(genSimpleIntent(EVENT_DEVICES_SCANNING_STOPS));
             mHandler.removeCallbacks(mRunnableStopScanning);
             isScanning=false;
         }
 
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-            Intent intent = genSimpleIntent(EVENT_DEVICE_IS_SCANNED);
+            Intent intent = genSimpleIntent(EVENT_A_DEVICE_IS_SCANNED);
             intent.putExtra(BtLibConstants.KEY_BT_DEVICE,device);
             intent.putExtra(BtLibConstants.KEY_BT_RSSI,rssi);
             intent.putExtra(BtLibConstants.KEY_SCAN_RECORD,scanRecord);
@@ -92,7 +88,7 @@ public class BleBackgroundService extends Service {
             super.onConnectionStateChange(gatt, status, newState);
             if (status == GATT_SUCCESS && newState == STATE_CONNECTED) {
                 sendBroadcast(genSimpleIntent(EVENT_DEVICE_CONNECTED));
-                startDiscoveringServices();
+//                startDiscoveringServices();
 
             } else if (status == GATT_SUCCESS && newState == STATE_DISCONNECTED) {
                 sendBroadcast(genSimpleIntent(EVENT_DEVICE_DISCONNECT));
@@ -203,12 +199,6 @@ public class BleBackgroundService extends Service {
         }
     };
 
-    private void startDiscoveringServices() {
-        boolean isStartSuccess = mBleClientModel.startDiscoveringServices(mBluetoothGatt);
-//        Intent intent = genSimpleIntent(EVENT_START_DISCOVER_SERVICE);
-//        intent.putExtra(KEY_BLE_IS_DISCOVER_START_SUCCESS, isStartSuccess);
-//        sendBroadcast(intent);
-    }
 
     private BluetoothDevice mDevice;
 
@@ -280,45 +270,45 @@ public class BleBackgroundService extends Service {
         return intent;
     }
 
-    private BleDevice getBleDevice(BluetoothGatt gatt) {
-        BleDevice device = new BleDevice();
-        List<BluetoothGattService> services = gatt.getServices();
-        BluetoothDevice dv = gatt.getDevice();
-        String dvName = dv.getName();
-        if (TextUtils.isEmpty(dvName)) {
-            dvName = "Unknown Device";
-        }
-        device.setName(dvName);
-        device.setAddress(dv.getAddress());
-        ArrayList<BleService> bleServices = new ArrayList<>();
-        for (BluetoothGattService sv : services) {
-            BleService bleService = new BleService();
-            bleService.setName("Unknown Service");
-            bleService.setUUID(sv.getUuid().toString());
-            ArrayList<BleCharacteristic> characteristics = new ArrayList<>();
-            List<BluetoothGattCharacteristic> btChars = sv.getCharacteristics();
-            for (BluetoothGattCharacteristic ch : btChars) {
-                BleCharacteristic characteristic = new BleCharacteristic();
-                characteristic.setName("Unknown Characteristic");
-                characteristic.setUUID(ch.getUuid().toString());
-                ArrayList<BleDescriptor> bleDescriptors = new ArrayList<>();
-                List<BluetoothGattDescriptor> btDescs = ch.getDescriptors();
-                for (BluetoothGattDescriptor dsc : btDescs) {
-                    BleDescriptor descriptor = new BleDescriptor();
-                    descriptor.setName("Unknown Descriptor");
-                    descriptor.setUUID(dsc.getUuid().toString());
-                    bleDescriptors.add(descriptor);
-                }
-                characteristic.setDescriptors(bleDescriptors);
-                characteristics.add(characteristic);
-            }
-
-            bleService.setBleCharacteristics(characteristics);
-            bleServices.add(bleService);
-        }
-        device.setBleServices(bleServices);
-        return device;
-    }
+//    private BleDevice getBleDevice(BluetoothGatt gatt) {
+//        BleDevice device = new BleDevice();
+//        List<BluetoothGattService> services = gatt.getServices();
+//        BluetoothDevice dv = gatt.getDevice();
+//        String dvName = dv.getName();
+//        if (TextUtils.isEmpty(dvName)) {
+//            dvName = "Unknown Device";
+//        }
+//        device.setName(dvName);
+//        device.setAddress(dv.getAddress());
+//        ArrayList<BleService> bleServices = new ArrayList<>();
+//        for (BluetoothGattService sv : services) {
+//            BleService bleService = new BleService();
+//            bleService.setName("Unknown Service");
+//            bleService.setUUID(sv.getUuid().toString());
+//            ArrayList<BleCharacteristic> characteristics = new ArrayList<>();
+//            List<BluetoothGattCharacteristic> btChars = sv.getCharacteristics();
+//            for (BluetoothGattCharacteristic ch : btChars) {
+//                BleCharacteristic characteristic = new BleCharacteristic();
+//                characteristic.setName("Unknown Characteristic");
+//                characteristic.setUUID(ch.getUuid().toString());
+//                ArrayList<BleDescriptor> bleDescriptors = new ArrayList<>();
+//                List<BluetoothGattDescriptor> btDescs = ch.getDescriptors();
+//                for (BluetoothGattDescriptor dsc : btDescs) {
+//                    BleDescriptor descriptor = new BleDescriptor();
+//                    descriptor.setName("Unknown Descriptor");
+//                    descriptor.setUUID(dsc.getUuid().toString());
+//                    bleDescriptors.add(descriptor);
+//                }
+//                characteristic.setDescriptors(bleDescriptors);
+//                characteristics.add(characteristic);
+//            }
+//
+//            bleService.setBleCharacteristics(characteristics);
+//            bleServices.add(bleService);
+//        }
+//        device.setBleServices(bleServices);
+//        return device;
+//    }
 
     private class BleServiceBroadcastReceiver extends BroadcastReceiver {
 
@@ -364,7 +354,7 @@ public class BleBackgroundService extends Service {
                     }
                     break;
                 case BtLibConstants.REQUEST_START_DISCOVER_SERVICES://ok
-                    startDiscoveringServices();
+                    mBleClientModel.startDiscoveringServices(mBluetoothGatt);
                     break;
                 case REQUEST_READ_CHAR://ok
                 {
@@ -445,7 +435,7 @@ public class BleBackgroundService extends Service {
 //                    sendBroadcast(simpleIntent);
                 }
                 break;
-                case REQUEST_KILL_LIBRARY_SERVICE:
+                case REQUEST_KILL_BLE_BG_SERVICE:
                     stopSelf();
                     break;
                 default:
