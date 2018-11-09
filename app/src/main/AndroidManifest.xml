@@ -27,6 +27,7 @@
         <activity android:name=".activity.DevicesListActivity" />
         <activity android:name=".activity.ServiceListActivity" />
         <activity android:name=".activity.BtCharActivity"></activity>
+        <service android:name="tgi.com.bluetooth.service.BleBackgroundService"/>
     </application>
 
 </manifest>

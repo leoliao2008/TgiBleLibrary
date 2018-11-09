@@ -17,8 +17,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.manager.BleClientManagerBeta;
+import tgi.com.bluetooth.callbacks.BleClientEventHandler;
 import tgi.com.tgifreertobtdemo.R;
 
 public class BtCharActivity extends AppCompatActivity {
@@ -26,7 +25,7 @@ public class BtCharActivity extends AppCompatActivity {
     private static final String BT_CHAR="BLUETOOTH_GATT_CHARACTERISTIC";
     private static final String BT_SERVICE="BLUETOOTH_GATT_SERVICE";
     private static final String BT_DESCRIPTOR="BLUETOOTH_GATT_DESCRIPTOR";
-    private BleClientManagerBeta mBleClientManagerBeta;
+//    private BleClientManagerBeta mBleClientManagerBeta;
     private String mBtCharUUID;
     private String mBtServiceUUID;
     private String mBtDescriptorUUID;
@@ -60,36 +59,36 @@ public class BtCharActivity extends AppCompatActivity {
         mBtServiceUUID=getIntent().getStringExtra(BT_SERVICE);
 
         mTvUUID.setText(mBtCharUUID);
-
-
-        initBleManager();
-        mGattCharacteristic= mBleClientManagerBeta.getBluetoothGattCharacteristic(mBtServiceUUID,mBtCharUUID);
-        if(mGattCharacteristic==null){
-            showToast("Characteristic not exists.");
-            finish();
-        }
-        BluetoothGattDescriptor descriptor = mGattCharacteristic.getDescriptor(UUID.fromString(mBtDescriptorUUID));
-        if(descriptor==null){
-            showToast("BluetoothGattDescriptor not exists.");
-            finish();
-        }
-
-        initConsole();
-        initListeners();
+//
+//
+//        initBleManager();
+//        mGattCharacteristic= mBleClientManagerBeta.getBluetoothGattCharacteristic(mBtServiceUUID,mBtCharUUID);
+//        if(mGattCharacteristic==null){
+//            showToast("Characteristic not exists.");
+//            finish();
+//        }
+//        BluetoothGattDescriptor descriptor = mGattCharacteristic.getDescriptor(UUID.fromString(mBtDescriptorUUID));
+//        if(descriptor==null){
+//            showToast("BluetoothGattDescriptor not exists.");
+//            finish();
+//        }
+//
+//        initConsole();
+//        initListeners();
     }
 
     private void initListeners() {
-        mSwtNotification.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mBleClientManagerBeta.toggleNotification(
-                        isChecked,
-                        mBtServiceUUID,
-                        mBtCharUUID,
-                        mBtDescriptorUUID
-                );
-            }
-        });
+//        mSwtNotification.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                mBleClientManagerBeta.toggleNotification(
+//                        isChecked,
+//                        mBtServiceUUID,
+//                        mBtCharUUID,
+//                        mBtDescriptorUUID
+//                );
+//            }
+//        });
     }
 
     private void initConsole() {
@@ -108,39 +107,39 @@ public class BtCharActivity extends AppCompatActivity {
     }
 
     private void initBleManager() {
-        mBleClientManagerBeta =new BleClientManagerBeta(this,new BleClientEventHandler(){
-            @Override
-            public void onError(String msg) {
-                super.onError(msg);
-            }
-
-            @Override
-            public void onCharacteristicRead(BluetoothGattCharacteristic characteristic) {
-                super.onCharacteristicRead(characteristic);
-                byte[] value = characteristic.getValue();
-                if(value!=null){
-                    updateConsole(new String(value));
-                }else {
-                    updateConsole("Char value is null.");
-                }
-            }
-
-            @Override
-            public void onReceiveNotification(BluetoothGattCharacteristic characteristic) {
-                super.onReceiveNotification(characteristic);
-                byte[] value = characteristic.getValue();
-                if(value!=null){
-                    updateConsole("Echo: "+new String(value));
-                }else {
-                    updateConsole("Echo: Char value is null.");
-                }
-            }
-        });
+//        mBleClientManagerBeta =new BleClientManagerBeta(this,new BleClientEventHandler(){
+//            @Override
+//            public void onError(String msg) {
+//                super.onError(msg);
+//            }
+//
+//            @Override
+//            public void onCharRead(BluetoothGattCharacteristic characteristic) {
+//                super.onCharRead(characteristic);
+//                byte[] value = characteristic.getValue();
+//                if(value!=null){
+//                    updateConsole(new String(value));
+//                }else {
+//                    updateConsole("Char value is null.");
+//                }
+//            }
+//
+//            @Override
+//            public void onReceiveNotification(BluetoothGattCharacteristic characteristic) {
+//                super.onReceiveNotification(characteristic);
+//                byte[] value = characteristic.getValue();
+//                if(value!=null){
+//                    updateConsole("Echo: "+new String(value));
+//                }else {
+//                    updateConsole("Echo: Char value is null.");
+//                }
+//            }
+//        });
     }
 
     @Override
     protected void onDestroy() {
-        mBleClientManagerBeta.disconnectDeviceIfAny();
+//        mBleClientManagerBeta.disconnectDeviceIfAny();
         super.onDestroy();
     }
 
@@ -149,13 +148,13 @@ public class BtCharActivity extends AppCompatActivity {
     }
 
     public void writeData(View view) {
-        mBleClientManagerBeta.writeCharacteristic(
-                mGattCharacteristic,
-                "hello world".getBytes()
-        );
+//        mBleClientManagerBeta.writeCharacteristic(
+//                mGattCharacteristic,
+//                "hello world".getBytes()
+//        );
     }
 
     public void readData(View view) {
-        mBleClientManagerBeta.readCharacteristic(mGattCharacteristic);
+//        mBleClientManagerBeta.readCharacteristic(mGattCharacteristic);
     }
 }

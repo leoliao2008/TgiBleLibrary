@@ -1,4 +1,4 @@
-package tgi.com.libraryble.base;
+package tgi.com.bluetooth.base;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 
-import tgi.com.libraryble.LibraryBtConstants;
+import tgi.com.bluetooth.BtLibConstants;
 
 
 public class BaseBtModel {
@@ -32,7 +32,7 @@ public class BaseBtModel {
 
     public void enableBt(Activity activity) {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        activity.startActivityForResult(enableBtIntent, LibraryBtConstants.REQUEST_ENABLE_BT);
+        activity.startActivityForResult(enableBtIntent, BtLibConstants.REQUEST_ENABLE_BT);
     }
 
 

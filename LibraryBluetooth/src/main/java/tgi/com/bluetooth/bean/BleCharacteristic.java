@@ -1,4 +1,4 @@
-package tgi.com.libraryble.bean;
+package tgi.com.bluetooth.bean;
 
 import android.os.Parcel;
 import android.os.Parcelable;

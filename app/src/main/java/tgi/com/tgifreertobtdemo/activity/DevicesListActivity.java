@@ -16,8 +16,9 @@ import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 
-import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.manager.BleClientManagerBeta;
+import tgi.com.bluetooth.bean.BleDevice;
+import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 import tgi.com.tgifreertobtdemo.adapters.DevicesListAdapter;
 import tgi.com.tgifreertobtdemo.iViews.ShowDevicesListView;
@@ -26,9 +27,10 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
     private ListView mLvDevicesList;
     private ToggleButton mTgbtnScan;
     private DevicesListAdapter mAdapter;
-    private ArrayList<BluetoothDevice> mDevices=new ArrayList<>();
+    private ArrayList<BleDevice> mDevices=new ArrayList<>();
     private ProgressDialog mProgressDialog;
-    private BleClientManagerBeta mBleClientManagerBeta;
+    private BleClientManager mBleClientManager;
+    private BleClientEventHandler mBleClientEventHandler;
 
     public static void start(Context context) {
         Intent starter = new Intent(context, DevicesListActivity.class);
@@ -49,66 +51,66 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
     }
 
     private void initBtManager() {
-        mBleClientManagerBeta =new BleClientManagerBeta(
-                this,
-                new BleClientEventHandler(){
-                    @Override
-                    public void onError(String msg) {
-                        super.onError(msg);
-                        showToast(msg);
-                        finish();
-                    }
+        mBleClientManager=BleClientManager.getInstance();
+        mBleClientEventHandler = new BleClientEventHandler(){
+            @Override
+            public void onStartScanningDevice() {
+                super.onStartScanningDevice();
+                showProgressDialogScanning();
+            }
 
-                    @Override
-                    public void onUserRefusesToEnableBt() {
-                        super.onUserRefusesToEnableBt();
-                        showToast("Cannot run without bt enabled.");
-                        finish();
-                    }
-
-                    @Override
-                    public void onBtNotSupported() {
-                        super.onBtNotSupported();
-                        showToast("Bt is not supported in this devices.");
-                        finish();
-                    }
-
-                    @Override
-                    public void onBleNotSupported() {
-                        super.onBleNotSupported();
-                        showToast("Ble is not supported in this devices.");
-                        finish();
-                    }
-
-                    @Override
-                    public void onStartScanningDevice() {
-                        super.onStartScanningDevice();
-                        mTgbtnScan.setChecked(true);
-                        showProgressDialogScanning();
-                    }
-
-                    @Override
-                    public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                        super.onDeviceScanned(device, rssi, scanRecord);
-                        updateDeviceList(device);
-                    }
-
-                    @Override
-                    public void onStopScanningDevice() {
-                        super.onStopScanningDevice();
-                        mTgbtnScan.setChecked(false);
-                        dismissProgressDialogScanning();
-                        showToast("Scan Stops.");
-                    }
+            @Override
+            public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                super.onDeviceScanned(device, rssi, scanRecord);
+                BleDevice bleDevice=new BleDevice();
+                String name = device.getName();
+                if(TextUtils.isEmpty(name)){
+                    name="Unknown Device";
                 }
-        );
+                String address = device.getAddress();
+                bleDevice.setName(name);
+                bleDevice.setAddress(address);
+                updateDeviceList(bleDevice);
+            }
+
+            @Override
+            public void onStopScanningDevice() {
+                super.onStopScanningDevice();
+                mTgbtnScan.setChecked(false);
+                dismissProgressDialogScanning();
+            }
+
+            @Override
+            public void onBtNotSupported() {
+                super.onBtNotSupported();
+                finish();
+            }
+
+            @Override
+            public void onBleNotSupported() {
+                super.onBleNotSupported();
+                finish();
+            }
+
+            @Override
+            public void onUserRefusesToEnableBt() {
+                super.onUserRefusesToEnableBt();
+                finish();
+            }
+
+            @Override
+            public void onError(String msg) {
+                super.onError(msg);
+                showToast(msg);
+            }
+        };
     }
 
     private void initListeners() {
         mLvDevicesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                BluetoothDevice device = mDevices.get(position);
+                BleDevice device = mDevices.get(position);
                 String name = device.getName();
                 if(TextUtils.isEmpty(name)){
                     name="Unknown Device";
@@ -121,9 +123,9 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
             @Override
             public void onClick(View v) {
                 if(mTgbtnScan.isChecked()){
-                    mBleClientManagerBeta.startScanningDevice();
+                    mBleClientManager.startScanningDevices(DevicesListActivity.this);
                 }else {
-                    mBleClientManagerBeta.stopScanningDevice();
+                    mBleClientManager.stopScanningDevices(DevicesListActivity.this);
                 }
             }
         });
@@ -148,7 +150,7 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
                 mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialog) {
-                        mBleClientManagerBeta.stopScanningDevice();
+                        mBleClientManager.stopScanningDevices(DevicesListActivity.this);
                     }
                 });
             }
@@ -169,11 +171,11 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
     }
 
     @Override
-    public void updateDeviceList(final BluetoothDevice device) {
+    public void updateDeviceList(final BleDevice device) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                for(BluetoothDevice dv:mDevices){
+                for(BleDevice dv:mDevices){
                     if(dv.getAddress().equals(device.getAddress())){
                         return;
                     }
@@ -202,14 +204,26 @@ public class DevicesListActivity extends AppCompatActivity implements ShowDevice
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        mBleClientManagerBeta.onActivityResult(requestCode,resultCode,data);
-        super.onActivityResult(requestCode, resultCode, data);
+        if(!mBleClientManager.onActivityResult(requestCode,resultCode,data)){
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
     protected void onDestroy() {
-        mBleClientManagerBeta.disconnectDeviceIfAny();
         dismissProgressDialogScanning();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mBleClientManager.onResume(this,mBleClientEventHandler);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mBleClientManager.onStop(this);
     }
 }

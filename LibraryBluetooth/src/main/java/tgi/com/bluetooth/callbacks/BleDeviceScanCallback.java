@@ -1,4 +1,4 @@
-package tgi.com.libraryble.callbacks;
+package tgi.com.bluetooth.callbacks;
 
 import android.bluetooth.BluetoothAdapter;
 

@@ -11,13 +11,14 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import tgi.com.bluetooth.bean.BleDevice;
 import tgi.com.tgifreertobtdemo.R;
 
 public class DevicesListAdapter extends BaseAdapter {
-    private ArrayList<BluetoothDevice> mList;
+    private ArrayList<BleDevice> mList;
     private Context mContext;
 
-    public DevicesListAdapter(ArrayList<BluetoothDevice> list, Context context) {
+    public DevicesListAdapter(ArrayList<BleDevice> list, Context context) {
         mList = list;
         mContext = context;
     }
@@ -47,13 +48,12 @@ public class DevicesListAdapter extends BaseAdapter {
         }else {
             vh= (ViewHolder) convertView.getTag();
         }
-        BluetoothDevice device = mList.get(position);
+        BleDevice device = mList.get(position);
         String name = device.getName();
         if(TextUtils.isEmpty(name)){
             name="Unknown Device";
         }
         vh.mTvName.setText(name);
-        device.getUuids();
         vh.mTvAddress.setText(device.getAddress());
         return convertView;
     }

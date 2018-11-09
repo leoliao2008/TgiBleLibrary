@@ -1,4 +1,4 @@
-package tgi.com.libraryble;
+package tgi.com.bluetooth;
 
 import org.junit.Test;
 

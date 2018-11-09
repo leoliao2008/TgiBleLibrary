@@ -1,4 +1,4 @@
-package tgi.com.libraryble.models;
+package tgi.com.bluetooth.models;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,8 +12,8 @@ import android.content.pm.PackageManager;
 
 import java.util.UUID;
 
-import tgi.com.libraryble.base.BaseBtModel;
-import tgi.com.libraryble.callbacks.BleDeviceScanCallback;
+import tgi.com.bluetooth.base.BaseBtModel;
+import tgi.com.bluetooth.callbacks.BleDeviceScanCallback;
 
 public class BleClientModel extends BaseBtModel {
 
@@ -44,6 +44,10 @@ public class BleClientModel extends BaseBtModel {
     public void disconnectLeDevice(BluetoothGatt btGatt){
         btGatt.disconnect();
         btGatt.close();
+    }
+
+    public boolean startDiscoveringServices(BluetoothGatt btGatt){
+        return btGatt.discoverServices();
     }
 
 

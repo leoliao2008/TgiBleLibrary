@@ -1,4 +1,4 @@
-package tgi.com.libraryble;
+package tgi.com.bluetooth;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

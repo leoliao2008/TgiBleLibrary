@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import tgi.com.libraryble.callbacks.BleClientEventHandler;
-import tgi.com.libraryble.manager.BleClientManagerBeta;
+import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 import tgi.com.tgifreertobtdemo.adapters.ServicesListAdapter;
 import tgi.com.tgifreertobtdemo.iViews.ShowServicesListView;
@@ -33,7 +33,7 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
     private TextView mTvDevName;
     private TextView mTvDevAddress;
 //    private TextView mTvData;
-    private BleClientManagerBeta mBleClientManagerBeta;
+    private BleClientManager mBleClientManagerBeta;
     private ArrayList<BluetoothGattService> mServicesList = new ArrayList<>();
     private ServicesListAdapter mAdapter;
     private ExpandableListView mExplvServicesList;
@@ -69,10 +69,10 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
         initListeners();
 
         showProgressDialog();
-        mBleClientManagerBeta.connectToDevice(
-                this,
-                mDevAddress
-        );
+//        mBleClientManagerBeta.connectToDevice(
+//                this,
+//                mDevAddress
+//        );
 
     }
 
@@ -120,35 +120,35 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
     }
 
     private void initBtManager() {
-        mBleClientManagerBeta = new BleClientManagerBeta(
-                this,
-                new BleClientEventHandler() {
-                    @Override
-                    public void onServiceListUpdate(List<BluetoothGattService> services) {
-                        super.onServiceListUpdate(services);
-                        dismissProgressDialog();
-                        updateExpListView(services);
-                    }
-
+//        mBleClientManagerBeta = new BleClientManager(
+//                this,
+//                new BleClientEventHandler() {
 //                    @Override
-//                    public void onCharacteristicRead(BluetoothGattCharacteristic characteristic) {
-//                        super.onCharacteristicRead(characteristic);
-//                        byte[] value = characteristic.getValue();
-//                        if(value!=null){
-//                            updateData(value);
-//                        }else {
-//                            showToast("no data is available.");
-//                        }
-//
+//                    public void onServiceListUpdate(List<BluetoothGattService> services) {
+//                        super.onServiceListUpdate(services);
+//                        dismissProgressDialog();
+//                        updateExpListView(services);
 //                    }
-
-                    @Override
-                    public void onError(String msg) {
-                        super.onError(msg);
-                        showToast(msg);
-                    }
-                }
-        );
+//
+////                    @Override
+////                    public void onCharRead(BluetoothGattCharacteristic characteristic) {
+////                        super.onCharRead(characteristic);
+////                        byte[] value = characteristic.getValue();
+////                        if(value!=null){
+////                            updateData(value);
+////                        }else {
+////                            showToast("no data is available.");
+////                        }
+////
+////                    }
+//
+//                    @Override
+//                    public void onError(String msg) {
+//                        super.onError(msg);
+//                        showToast(msg);
+//                    }
+//                }
+//        );
     }
 
     @Override
@@ -197,18 +197,18 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
 
     @Override
     public void showProgressDialog() {
-        mProgressDialog = ProgressDialog.show(
-                this,
-                null,
-                null,
-                true,
-                true);
-        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                mBleClientManagerBeta.disconnectDeviceIfAny();
-            }
-        });
+//        mProgressDialog = ProgressDialog.show(
+//                this,
+//                null,
+//                null,
+//                true,
+//                true);
+//        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+//            @Override
+//            public void onCancel(DialogInterface dialog) {
+//                mBleClientManagerBeta.disconnectDeviceIfAny();
+//            }
+//        });
 
     }
 
@@ -221,7 +221,7 @@ public class ServiceListActivity extends AppCompatActivity implements ShowServic
 
     @Override
     protected void onDestroy() {
-        mBleClientManagerBeta.disconnectDeviceIfAny();
+//        mBleClientManagerBeta.disconnectDeviceIfAny();
         super.onDestroy();
     }
 
