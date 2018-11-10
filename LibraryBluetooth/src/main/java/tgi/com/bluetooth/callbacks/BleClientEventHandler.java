@@ -73,4 +73,8 @@ public class BleClientEventHandler {
     public void onServiceDiscover(BluetoothDevice device, ArrayList<BluetoothGattService> services) {
 
     }
+
+    public void onLocationPermissionNotGranted() {
+
+    }
 }
