@@ -47,7 +47,7 @@ public class BleClientManager {
         return bleClientManager;
     }
 
-    public void turnOnBt(Activity activity){
+    public void enableBt(Activity activity){
         Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         activity.startActivityForResult(intent,REQUEST_ENABLE_BT);
     }

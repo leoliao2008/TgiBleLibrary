@@ -49,7 +49,7 @@ public class DeviceListActivity extends AppCompatActivity {
         @Override
         public void onBtNotEnabled() {
             super.onBtNotEnabled();
-            mManager.turnOnBt(DeviceListActivity.this);
+            mManager.enableBt(DeviceListActivity.this);
         }
 
         @Override
