@@ -183,9 +183,8 @@ public class BleClientManager {
                     }else {
                         stopBecauseMissingPermission(activity,permission );
                     }
+                    break;
                 }
-
-                break;
             }
             return true;
         }
