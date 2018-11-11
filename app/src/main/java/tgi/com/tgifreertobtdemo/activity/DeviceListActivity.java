@@ -27,6 +27,70 @@ public class DeviceListActivity extends AppCompatActivity {
     private ArrayList<BluetoothDevice> mDevices = new ArrayList<>();
     private ArrayAdapter<BluetoothDevice> mAdapter;
     private BleClientManager mManager;
+    private BleClientEventHandler mEventHandler=new BleClientEventHandler() {
+        @Override
+        public void onLocationPermissionNotGranted() {
+            super.onLocationPermissionNotGranted();
+            mManager.requestLocationPermission(DeviceListActivity.this);
+        }
+
+        @Override
+        public void onBtNotSupported() {
+            super.onBtNotSupported();
+            finish();
+        }
+
+        @Override
+        public void onBleNotSupported() {
+            super.onBleNotSupported();
+            finish();
+        }
+
+        @Override
+        public void onBtNotEnabled() {
+            super.onBtNotEnabled();
+            mManager.turnOnBt(DeviceListActivity.this);
+        }
+
+        @Override
+        public void onUserRefusesToEnableBt() {
+            super.onUserRefusesToEnableBt();
+            finish();
+        }
+
+        @Override
+        public void onUserEnableBt() {
+            super.onUserEnableBt();
+        }
+
+        @Override
+        public void onStartScanningDevice() {
+            super.onStartScanningDevice();
+            ProgressDialog.show(
+                    DeviceListActivity.this,
+                    "Scanning...",
+                    "Scanning for devices, please wait...",
+                    true,
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            mManager.stopScanningDevices(DeviceListActivity.this);
+                        }
+                    });
+        }
+
+        @Override
+        public void onStopScanningDevice() {
+            super.onStopScanningDevice();
+            ProgressDialog.dismiss();
+        }
+
+        @Override
+        public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
+            super.onDeviceScanned(device, rssi, scanRecord);
+            updateList(device);
+        }
+    };
 
     public static void start(Context context) {
         Intent starter = new Intent(context, DeviceListActivity.class);
@@ -48,70 +112,7 @@ public class DeviceListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mManager.onResume(this, new BleClientEventHandler() {
-            @Override
-            public void onLocationPermissionNotGranted() {
-                super.onLocationPermissionNotGranted();
-                mManager.requestLocationPermission(DeviceListActivity.this);
-            }
-
-            @Override
-            public void onBtNotSupported() {
-                super.onBtNotSupported();
-                finish();
-            }
-
-            @Override
-            public void onBleNotSupported() {
-                super.onBleNotSupported();
-                finish();
-            }
-
-            @Override
-            public void onBtNotEnabled() {
-                super.onBtNotEnabled();
-                mManager.turnOnBt(DeviceListActivity.this);
-            }
-
-            @Override
-            public void onUserRefusesToEnableBt() {
-                super.onUserRefusesToEnableBt();
-                finish();
-            }
-
-            @Override
-            public void onUserEnableBt() {
-                super.onUserEnableBt();
-            }
-
-            @Override
-            public void onStartScanningDevice() {
-                super.onStartScanningDevice();
-                ProgressDialog.show(
-                        DeviceListActivity.this,
-                        "Scanning...",
-                        "Scanning for devices, please wait...",
-                        true,
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                mManager.stopScanningDevices(DeviceListActivity.this);
-                            }
-                        });
-            }
-
-            @Override
-            public void onStopScanningDevice() {
-                super.onStopScanningDevice();
-                ProgressDialog.dismiss();
-            }
-
-            @Override
-            public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                super.onDeviceScanned(device, rssi, scanRecord);
-                updateList(device);
-            }
-        });
+        mManager.onResume(this, mEventHandler);
     }
 
     private void updateList(BluetoothDevice device) {
