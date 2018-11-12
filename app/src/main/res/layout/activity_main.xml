@@ -8,6 +8,13 @@
     tools:context=".activity.MainActivity"
     android:orientation="vertical">
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Device List Activity"
+        android:textAllCaps="false"
+        android:onClick="toDevicesList"/>
+
 
 
 </LinearLayout>

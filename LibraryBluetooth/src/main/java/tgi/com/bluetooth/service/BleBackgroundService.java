@@ -1,5 +1,6 @@
 package tgi.com.bluetooth.service;
 
+import android.Manifest;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -315,6 +317,12 @@ public class BleBackgroundService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
 
+            //if location permission is not granted, need to grant first.
+            if(getPackageManager().checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, getPackageName())!=PackageManager.PERMISSION_GRANTED){
+                sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_LOCATION_PERMISSION_NOT_GRANTED));
+                return;
+            }
+            //if bt not yet enabled, need to enable first.
             if(!isBtEnable()){
                 sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_BT_NOT_ENABLE));
                 return;

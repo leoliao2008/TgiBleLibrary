@@ -16,4 +16,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
+    public void toDevicesList(View view) {
+        DeviceListActivity.start(this);
+    }
 }
