@@ -10,6 +10,9 @@ import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.UUID;
 
 import tgi.com.bluetooth.base.BaseBtModel;
@@ -33,7 +36,7 @@ public class BleClientModel extends BaseBtModel {
     }
 
     public BluetoothGatt connectToLeDevice(Context context, BluetoothDevice device, BluetoothGattCallback callback) {
-        return device.connectGatt(context, true, callback);
+        return device.connectGatt(context, false, callback);
     }
 
     public BluetoothDevice getBluetoothDevice(BluetoothAdapter adapter,String deviceAddress){
@@ -79,5 +82,9 @@ public class BleClientModel extends BaseBtModel {
     public boolean writeCharacteristic(BluetoothGatt bluetoothGatt,BluetoothGattCharacteristic btChar, byte[] value) {
         btChar.setValue(value);
         return bluetoothGatt.writeCharacteristic(btChar);
+    }
+
+    public ArrayList<BluetoothDevice> getBondedDevices(BluetoothAdapter adapter) {
+        return new ArrayList<BluetoothDevice>(adapter.getBondedDevices());
     }
 }

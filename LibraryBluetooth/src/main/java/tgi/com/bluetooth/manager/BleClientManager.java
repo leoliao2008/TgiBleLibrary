@@ -13,16 +13,15 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
-import android.support.v4.content.PermissionChecker;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.util.Pair;
 
-import java.security.Permission;
 import java.util.ArrayList;
-import java.util.Random;
 
 import tgi.com.bluetooth.BtLibConstants;
+import tgi.com.bluetooth.bean.TgiBtGattService;
 import tgi.com.bluetooth.callbacks.BleClientEventHandler;
 import tgi.com.bluetooth.service.BleBackgroundService;
 
@@ -60,7 +59,7 @@ public class BleClientManager {
         activity.registerReceiver(mReceiver, intentFilter);
     }
 
-    public void onStop(Activity activity) {
+    public void onPause(Activity activity) {
         if (mReceiver != null) {
             activity.unregisterReceiver(mReceiver);
             mReceiver = null;
@@ -85,18 +84,22 @@ public class BleClientManager {
         sendBroadcast(context, REQUEST_STOP_SCANNING_DEVICE);
     }
 
-    public void connectDevice(Context context,String devAddress){
-        sendBroadcast(
-                context,
-                REQUEST_CONNECT_DEVICE,
-                new Pair<String, String>(KEY_BLE_DEVICE_ADDRESS,devAddress));
+    public void connectDevice(Context context,BluetoothDevice device){
+//        sendBroadcast(
+//                context,
+//                REQUEST_CONNECT_DEVICE,
+//                new Pair<String, String>(KEY_BLE_DEVICE_ADDRESS,devAddress));
+        Intent intent=new Intent(ACTION_REQUEST_BLE_SERVICE);
+        intent.putExtra(KEY_BLE_REQUEST,REQUEST_CONNECT_DEVICE);
+        intent.putExtra(BtLibConstants.KEY_BT_DEVICE,device);
+        context.sendBroadcast(intent);
     }
 
     public void disconnectDevice(Context context){
         sendBroadcast(context, REQUEST_DISCONNECT_DEVICE);
     }
 
-    public void startScanningServices(Context activity){
+    public void scanServices(Context activity){
         sendBroadcast(activity, REQUEST_START_DISCOVER_SERVICES);
     }
 
@@ -168,6 +171,7 @@ public class BleClientManager {
                                     .setMessage("The permission :" + permission + " is vital for this app, you need to grant it in order to use this function." +
                                             "Click Confirm to grant permission.")
                                     .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+                                        @RequiresApi(api = Build.VERSION_CODES.M)
                                         @Override
                                         public void onClick(DialogInterface dialogInterface, int i) {
                                             mAlertDialog.dismiss();
@@ -247,15 +251,21 @@ public class BleClientManager {
                     BluetoothDevice device=intent.getParcelableExtra(KEY_BT_DEVICE);
                     int rssi=intent.getIntExtra(KEY_BT_RSSI,-1);
                     byte[] scanRecord=intent.getByteArrayExtra(KEY_SCAN_RECORD);
-                    showLog("device is received: "+device.getAddress());
                     mEventHandler.onDeviceScanned(device,rssi,scanRecord);
                     break;
                 }
                 case EVENT_DEVICE_CONNECTED://ok
-                    mEventHandler.onDeviceConnected();
+                {
+                    BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
+                    mEventHandler.onDeviceConnected(device);
+                }
                     break;
                 case EVENT_DEVICE_DISCONNECT://ok
-                    mEventHandler.onDeviceDisconnected();
+                {
+                    BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
+                    mEventHandler.onDeviceDisconnected(device);
+                }
+
                     break;
 //                case EVENT_START_DISCOVER_SERVICE://ok
 //                    boolean isStartSuccess = intent.getBooleanExtra(KEY_BLE_IS_DISCOVER_START_SUCCESS, false);
@@ -263,17 +273,30 @@ public class BleClientManager {
 //                    break;
                 case EVENT_SERVICES_DISCOVERED://ok
                 {
+                    showLog("EVENT_SERVICES_DISCOVERED");
                     BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
-                    ArrayList<BluetoothGattService> services = intent.getParcelableArrayListExtra(KEY_GATT_SERVICES);
+                    ArrayList<TgiBtGattService> services = intent.getParcelableArrayListExtra(KEY_GATT_SERVICES);
                     mEventHandler.onServiceDiscover(device,services);
                 }
+                    break;
+                case EVENT_BT_FAIL_TO_DISCOVER_SERVICE:
+                {
+                    BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
+                    mEventHandler.onFailToDiscoverService(device);
+                }
+
                     break;
 //                case EVENT_BLE_READ_CHAR_INIT_OK:
 //                    mEventHandler.onCharacteristicReadInitComplete(true);
 //                    break;
-//                case EVENT_BLE_READ_CHAR_INIT_FAILS:
-//                    mEventHandler.onCharacteristicReadInitComplete(false);
-//                    break;
+                case EVENT_BLE_READ_CHAR_FAILS:
+                {
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    mEventHandler.onFailToReadChar(serviceUUID,charUUID);
+                }
+
+                    break;
                 case EVENT_CHAR_READ: {//ok
 //                    boolean isSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
                     String uuid = intent.getStringExtra(KEY_BLE_CHAR_UUID);

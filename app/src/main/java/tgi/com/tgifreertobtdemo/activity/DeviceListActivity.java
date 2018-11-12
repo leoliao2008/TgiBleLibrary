@@ -88,6 +88,9 @@ public class DeviceListActivity extends AppCompatActivity {
         @Override
         public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
             super.onDeviceScanned(device, rssi, scanRecord);
+            if(TextUtils.isEmpty(device.getName())){
+                return;
+            }
             updateList(device);
         }
     };
@@ -101,6 +104,7 @@ public class DeviceListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_list);
+        getSupportActionBar().setTitle("Device List");
         initListView();
         initBleManager();
     }
@@ -124,7 +128,6 @@ public class DeviceListActivity extends AppCompatActivity {
             }
         }
         if(!isAlreadyContained){
-            showLog("new device:"+device.getAddress());
             mDevices.add(device);
             mAdapter.notifyDataSetChanged();
         }
@@ -136,9 +139,15 @@ public class DeviceListActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        mManager.onStop(this);
+    protected void onPause() {
+        super.onPause();
+        mManager.onPause(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ProgressDialog.dismiss();
     }
 
     @Override
@@ -186,7 +195,7 @@ public class DeviceListActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 BluetoothDevice device = mDevices.get(i);
-
+                ServicesListActivity.start(DeviceListActivity.this,device);
             }
         });
     }

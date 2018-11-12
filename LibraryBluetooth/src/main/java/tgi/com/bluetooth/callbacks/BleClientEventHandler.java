@@ -2,8 +2,11 @@ package tgi.com.bluetooth.callbacks;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattService;
+import android.content.Intent;
 
 import java.util.ArrayList;
+
+import tgi.com.bluetooth.bean.TgiBtGattService;
 
 public class BleClientEventHandler {
 
@@ -58,11 +61,11 @@ public class BleClientEventHandler {
 
     }
 
-    public void onDeviceConnected() {
+    public void onDeviceConnected(BluetoothDevice device) {
 
     }
 
-    public void onDeviceDisconnected() {
+    public void onDeviceDisconnected(BluetoothDevice device) {
 
     }
 
@@ -70,11 +73,19 @@ public class BleClientEventHandler {
 
     }
 
-    public void onServiceDiscover(BluetoothDevice device, ArrayList<BluetoothGattService> services) {
+    public void onServiceDiscover(BluetoothDevice device, ArrayList<TgiBtGattService> services) {
 
     }
 
     public void onLocationPermissionNotGranted() {
+
+    }
+
+    public void onFailToReadChar(String serviceUUID, String charUUID) {
+
+    }
+
+    public void onFailToDiscoverService(BluetoothDevice deviceAddress) {
 
     }
 }

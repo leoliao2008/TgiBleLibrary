@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/LibraryBluetooth/LibraryBluetooth.iml" filepath="$PROJECT_DIR$/LibraryBluetooth/LibraryBluetooth.iml" />
       <module fileurl="file://$PROJECT_DIR$/TgiBleLibrary.iml" filepath="$PROJECT_DIR$/TgiBleLibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TgiFreeRtoBtDemo.iml" filepath="$PROJECT_DIR$/TgiFreeRtoBtDemo.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
