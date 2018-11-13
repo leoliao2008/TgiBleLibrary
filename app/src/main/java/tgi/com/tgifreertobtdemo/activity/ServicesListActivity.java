@@ -1,7 +1,6 @@
 package tgi.com.tgifreertobtdemo.activity;
 
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -21,7 +20,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import tgi.com.bluetooth.BtLibConstants;
-import tgi.com.bluetooth.bean.TgiBtGattChar;
 import tgi.com.bluetooth.bean.TgiBtGattService;
 import tgi.com.bluetooth.callbacks.BleClientEventHandler;
 import tgi.com.bluetooth.manager.BleClientManager;
@@ -148,6 +146,7 @@ public class ServicesListActivity extends AppCompatActivity {
         super.onResume();
         mManager.onResume(this,mHandler);
     }
+
 
     @Override
     protected void onPause() {

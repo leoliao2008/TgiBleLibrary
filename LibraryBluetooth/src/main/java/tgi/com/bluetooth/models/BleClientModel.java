@@ -70,13 +70,19 @@ public class BleClientModel extends BaseBtModel {
         return bluetoothGatt.readDescriptor(descriptor);
     }
 
-    public boolean toggleNotification(BluetoothGatt bluetoothGatt, boolean isToEnable,BluetoothGattDescriptor descriptor){
+    public boolean toggleNotification(
+            BluetoothGatt gatt,
+            boolean isToEnable,
+            BluetoothGattCharacteristic btChar,
+            BluetoothGattDescriptor descriptor){
+
+        gatt.setCharacteristicNotification(btChar,isToEnable);
         if(isToEnable){
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
         }else {
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         }
-        return bluetoothGatt.writeDescriptor(descriptor);
+        return gatt.writeDescriptor(descriptor);
     }
 
     public boolean writeCharacteristic(BluetoothGatt bluetoothGatt,BluetoothGattCharacteristic btChar, byte[] value) {

@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -55,8 +54,7 @@ public class BleClientManager {
         BleBackgroundService.start(activity);//start the service if not already started.
         mEventHandler = eventHandler;
         mReceiver = new BleClientManagerBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter(ACTION_BLE_ACTIVITY_UPDATE);
-        activity.registerReceiver(mReceiver, intentFilter);
+        activity.registerReceiver(mReceiver, new IntentFilter(ACTION_BLE_ACTIVITY_UPDATE));
     }
 
     public void onPause(Activity activity) {
@@ -121,14 +119,34 @@ public class BleClientManager {
         context.sendBroadcast(intent);
     }
 
-    public void toggleNotification(Context context,boolean isToReg,String serviceUUID,String charUUID,String descUUID){
-        Intent intent=new Intent(ACTION_REQUEST_BLE_SERVICE);
-        intent.putExtra(KEY_BLE_REQUEST, REQUEST_TOGGLE_REG_NOTIFICATION);
-        intent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
-        intent.putExtra(KEY_BLE_CHAR_UUID,charUUID);
-        intent.putExtra(KEY_BLE_DESC_UUID,descUUID);
-        intent.putExtra(KEY_IS_TO_ENABLE,isToReg);
-        context.sendBroadcast(intent);
+    public void registerNotification(Context context,String serviceUUID,String charUUID,String descUUID){
+        toggleNotification(
+                context,
+                serviceUUID,
+                charUUID,
+                descUUID,
+                true
+        );
+    }
+
+    public void unRegisterNotification(Context context, String serviceUUID, String charUUID, String descUUID){
+        toggleNotification(
+                context,
+                serviceUUID,
+                charUUID,
+                descUUID,
+                false
+        );
+    }
+
+    private void toggleNotification(Context context,String serviceUUID,String charUUID,String descUUID,boolean isToEnable){
+        sendBroadcast(
+                context,
+                isToEnable?BtLibConstants.REQUEST_REGISTER_NOTIFICATION:BtLibConstants.REQUEST_UNREGISTER_NOTIFICATION,
+                new Pair<String, String>(KEY_BLE_SERVICE_UUID,serviceUUID),
+                new Pair<String, String>(KEY_BLE_CHAR_UUID,charUUID),
+                new Pair<String, String>(KEY_BLE_DESC_UUID,descUUID)
+        );
     }
 
     public void killBleBgService(Context context){
@@ -222,6 +240,16 @@ public class BleClientManager {
         }
     }
 
+    public void readDescriptorValue(Context context, String serviceUUID, String charUUID, String descUUID) {
+        sendBroadcast(
+                context,
+                BtLibConstants.REQUEST_READ_DESCRIPTOR_VALUE,
+                new Pair<String, String>(KEY_BLE_SERVICE_UUID,serviceUUID),
+                new Pair<String, String>(KEY_BLE_CHAR_UUID,charUUID),
+                new Pair<String, String>(KEY_BLE_DESC_UUID,descUUID)
+        );
+    }
+
 
     private class BleClientManagerBroadcastReceiver extends BroadcastReceiver {
 
@@ -265,12 +293,7 @@ public class BleClientManager {
                     BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
                     mEventHandler.onDeviceDisconnected(device);
                 }
-
                     break;
-//                case EVENT_START_DISCOVER_SERVICE://ok
-//                    boolean isStartSuccess = intent.getBooleanExtra(KEY_BLE_IS_DISCOVER_START_SUCCESS, false);
-//                    mEventHandler.onStartDiscoveringServices(isStartSuccess);
-//                    break;
                 case EVENT_SERVICES_DISCOVERED://ok
                 {
                     showLog("EVENT_SERVICES_DISCOVERED");
@@ -286,9 +309,6 @@ public class BleClientManager {
                 }
 
                     break;
-//                case EVENT_BLE_READ_CHAR_INIT_OK:
-//                    mEventHandler.onCharacteristicReadInitComplete(true);
-//                    break;
                 case EVENT_BLE_READ_CHAR_FAILS:
                 {
                     String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
@@ -298,48 +318,76 @@ public class BleClientManager {
 
                     break;
                 case EVENT_CHAR_READ: {//ok
-//                    boolean isSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
                     String uuid = intent.getStringExtra(KEY_BLE_CHAR_UUID);
                     byte[] bytes = intent.getByteArrayExtra(KEY_BLE_CHAR_VALUE);
                     mEventHandler.onCharRead(uuid, bytes);
                     break;
                 }
-//                case EVENT_BLE_WRITE_CHAR_INIT_OK:
-//                    mEventHandler.onCharacteristicWriteInitComplete(true);
-//                    break;
-//                case EVENT_BLE_WRITE_CHAR_INIT_FAILS:
-//                    mEventHandler.onCharacteristicWriteInitComplete(false);
-//                    break;
                 case EVENT_BLE_CHAR_WRITTEN: {//ok
-//                    boolean isSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
-                    String uuid = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
                     byte[] bytes = intent.getByteArrayExtra(KEY_BLE_CHAR_VALUE);
-                    mEventHandler.onCharWritten(uuid, bytes);
+                    mEventHandler.onCharWritten(serviceUUID,charUUID, bytes);
                     break;
                 }
-//                case EVENT_BEGIN_ENABLE_BLE_NOTIFICATION: {
-//                    String uuid = intent.getStringExtra(KEY_BLE_DESC_UUID);
-//                    boolean iSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
-//                    mEventHandler.onBeginEnableNotification(uuid, iSuccess);
-//                    break;
-//                }
-//                case EVENT_BEGIN_DISABLE_BLE_NOTIFICATION: {
-//                    String uuid = intent.getStringExtra(KEY_BLE_DESC_UUID);
-//                    boolean iSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
-//                    mEventHandler.onBeginDisableNotification(uuid, iSuccess);
-//                    break;
-//                }
-                case EVENT_BLE_ENABLE_NOTIFICATION:{
-                    String uuid = intent.getStringExtra(KEY_BLE_DESC_UUID);
-                    boolean isSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
-                    mEventHandler.onEnableNotification(isSuccess,uuid);
+                case EVENT_BLE_WRITE_CHAR_FAILS:
+                {
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    byte[] bytes = intent.getByteArrayExtra(KEY_BLE_CHAR_VALUE);
+                    mEventHandler.onFailToWriteChar(serviceUUID,charUUID, bytes);
+                }
+                    break;
+                case EVENT_BLE_NOTIFICATION_IS_REGISTERED:
+                case EVENT_REGISTER_NOTIFICATION_FAILS:
+                {
+                    String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    if(event.equals(EVENT_BLE_NOTIFICATION_IS_REGISTERED)){
+                        mEventHandler.onNotificationRegisterSuccess(serviceUUID,charUUID,descUUID);
+                    }else {
+                        mEventHandler.onNotificationRegisterFails(serviceUUID,charUUID,descUUID);
+                    }
                     break;
                 }
-                case EVENT_BLE_DISABLE_NOTIFICATION:{
-                    String uuid = intent.getStringExtra(KEY_BLE_DESC_UUID);
-                    boolean isSuccess = intent.getBooleanExtra(KEY_BLE_OP_SUCCESS, false);
-                    mEventHandler.onDisableNotification(isSuccess,uuid);
+                case EVENT_BLE_NOTIFICATION_IS_UNREGISTERED:
+                case EVENT_UNREGISTER_NOTIFICATION_FAILS:
+                {
+                    String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    if(event.equals(EVENT_BLE_NOTIFICATION_IS_UNREGISTERED)){
+                        mEventHandler.onUnregisterNotificationSuccess(serviceUUID,charUUID,descUUID);
+                    }else {
+                        mEventHandler.onUnregisterNotificationFails(serviceUUID,charUUID,descUUID);
+                    }
+                }
+                break;
+                //this is when a notification is triggered
+                case EVENT_NOTIFICATION_TRIGGERED:
+                {
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    byte[] value = intent.getByteArrayExtra(KEY_BLE_CHAR_VALUE);
+                    mEventHandler.onReceiveNotification(serviceUUID,charUUID,value);
+                }
                     break;
+                case EVENT_BLE_DESCRIPTOR_IS_READ:
+                {
+                    String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    byte[] data = intent.getByteArrayExtra(KEY_BLE_DESC_VALUE);
+                    mEventHandler.onDescriptorRead(serviceUUID,charUUID,descUUID,data);
+                }
+                    break;
+                case EVENT_READ_DESCRIPTOR_FAILS:
+                {
+                    String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
+                    String charUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
+                    String serviceUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
+                    mEventHandler.onReadDescriptorFails(serviceUUID,charUUID,descUUID);
                 }
                 default:
                     break;
@@ -354,6 +402,4 @@ public class BleClientManager {
     private void showLog(String msg){
         Log.e(getClass().getSimpleName(),msg);
     }
-
-
 }

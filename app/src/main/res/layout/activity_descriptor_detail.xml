@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.DescriptorDetailActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/activity_descriptor_detail_tv_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/sp_20"
+        android:text="Info"
+        android:padding="@dimen/dp_10"
+        android:textColor="@android:color/holo_orange_light"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Value:"
+            android:padding="@dimen/dp_10"/>
+        <TextView
+            android:id="@+id/activity_descriptor_detail_tv_desc_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@android:color/holo_red_light"
+            android:text="ss"/>
+        <Button
+            android:onClick="getDescriptorValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            android:text="Get"/>
+    </LinearLayout>
+
+    <ToggleButton
+        android:id="@+id/activity_descriptor_detail_tgbtn_notification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textOn="Current Status: Notification On"
+        android:textOff="Current Status: Notification Off"
+        android:textAllCaps="false"/>
+
+    <ListView
+        android:id="@+id/activity_descriptor_detail_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+</LinearLayout>

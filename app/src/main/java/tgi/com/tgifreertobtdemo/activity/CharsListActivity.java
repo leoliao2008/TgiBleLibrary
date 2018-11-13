@@ -1,8 +1,6 @@
 package tgi.com.tgifreertobtdemo.activity;
 
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Parcelable;
@@ -20,7 +18,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 import tgi.com.bluetooth.BtLibConstants;
 import tgi.com.bluetooth.bean.TgiBtGattChar;
@@ -98,7 +95,7 @@ public class CharsListActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 TgiBtGattChar btChar = mChars.get(position);
-                DescriptorListActivity.start(
+                CharDetailActivity.start(
                         CharsListActivity.this,
                         mDevice,
                         mServiceUUID,

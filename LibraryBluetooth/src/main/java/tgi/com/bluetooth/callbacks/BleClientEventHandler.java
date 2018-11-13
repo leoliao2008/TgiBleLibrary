@@ -21,16 +21,7 @@ public class BleClientEventHandler {
     }
 
 
-    public void onCharWritten(String uuid, byte[] value) {
-
-    }
-
-
-    public void onEnableNotification(boolean isSuccess, String descUuid) {
-
-    }
-
-    public void onDisableNotification(boolean isSuccess, String descUuid) {
+    public void onCharWritten(String serviceUUID, String charUUID, byte[] writtenValue) {
 
     }
 
@@ -86,6 +77,38 @@ public class BleClientEventHandler {
     }
 
     public void onFailToDiscoverService(BluetoothDevice deviceAddress) {
+
+    }
+
+    public void onFailToWriteChar(String serviceUUID, String charUUID, byte[] writeContent) {
+
+    }
+
+    public void onNotificationRegisterSuccess(String serviceUUID, String charUUID, String descUUID) {
+
+    }
+
+    public void onNotificationRegisterFails(String serviceUUID, String charUUID, String descUUID) {
+
+    }
+
+    public void onUnregisterNotificationSuccess(String serviceUUID, String charUUID, String descUUID) {
+
+    }
+
+    public void onUnregisterNotificationFails(String serviceUUID, String charUUID, String descUUID) {
+
+    }
+
+    public void onReceiveNotification(String serviceUUID, String charUUID, byte[] value) {
+
+    }
+
+    public void onReadDescriptorFails(String serviceUUID, String charUUID, String descUUID) {
+
+    }
+
+    public void onDescriptorRead(String serviceUUID, String charUUID, String descUUID, byte[] value) {
 
     }
 }

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.CharDetailActivity"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/activity_char_detail_tv_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/sp_20"
+        android:padding="@dimen/dp_10"
+        android:textColor="@android:color/holo_orange_light"
+        android:text="Info"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Char Value:"
+            android:padding="@dimen/dp_10"
+            android:textColor="@android:color/black"/>
+        <TextView
+            android:id="@+id/activity_char_detail_tv_char_value"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@android:color/holo_red_light"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update"
+            android:onClick="getCharValue"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test Content:"
+            android:padding="@dimen/dp_10"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08"/>
+    </LinearLayout>
+    <Button
+        android:onClick="writeTestContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Write Test Content"
+        android:textAllCaps="false"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Result:"
+            android:padding="@dimen/dp_10"/>
+        <TextView
+            android:id="@+id/activity_char_detail_tv_write_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="sss"
+            android:textColor="@android:color/holo_red_light"
+            android:padding="@dimen/dp_10"/>
+    </LinearLayout>
+
+
+    <ListView
+        android:id="@+id/activity_char_detail_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</LinearLayout>
