@@ -29,15 +29,26 @@ import static tgi.com.bluetooth.BtLibConstants.*;
 import static tgi.com.bluetooth.BtLibConstants.ACTION_REQUEST_BLE_SERVICE;
 import static tgi.com.bluetooth.BtLibConstants.KEY_BLE_REQUEST;
 
+/**
+ * Author: leo
+ * Data: On 13/11/2018
+ * Project: TgiFreeRtoBtDemo
+ * Description: 这个是蓝牙BLE库的管理类，直接调用这个类的方法即可。该类通过启动一个后台服务专门和
+ * 蓝牙设备做信息交互，通过广播操作该服务和获取该服务的操作结果。相关蓝牙BLE背景知识可参考
+ * <a href="https://developer.android.com/guide/topics/connectivity/bluetooth-le">官网</a>。
+ */
 public class BleClientManager {
     private BleClientEventHandler mEventHandler;
     private BleClientManagerBroadcastReceiver mReceiver;
     private static BleClientManager bleClientManager;
     private AlertDialog mAlertDialog;
 
-    private BleClientManager() {
-    }
+    private BleClientManager() {}
 
+    /**
+     * 单例模式获取管理类。
+     * @return
+     */
     public synchronized static BleClientManager getInstance() {
         if (bleClientManager == null) {
             bleClientManager = new BleClientManager();
@@ -45,11 +56,21 @@ public class BleClientManager {
         return bleClientManager;
     }
 
+    /**
+     * 启动系统蓝牙。使用此方法必须在Activity的onActivityResult方法中调用
+     *{@link BleClientManager#onActivityResult(int, int, Intent)}
+     * @param activity
+     */
     public void enableBt(Activity activity){
         Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         activity.startActivityForResult(intent,REQUEST_ENABLE_BT);
     }
 
+    /**
+     * 在onResume中注册广播接收器和启动后台服务（如果还没启动）
+     * @param activity
+     * @param eventHandler
+     */
     public void onResume(Activity activity, BleClientEventHandler eventHandler) {
         BleBackgroundService.start(activity);//start the service if not already started.
         mEventHandler = eventHandler;
@@ -57,6 +78,10 @@ public class BleClientManager {
         activity.registerReceiver(mReceiver, new IntentFilter(ACTION_BLE_ACTIVITY_UPDATE));
     }
 
+    /**
+     * 在onPause中取消广播接收器
+     * @param activity
+     */
     public void onPause(Activity activity) {
         if (mReceiver != null) {
             activity.unregisterReceiver(mReceiver);
@@ -74,33 +99,56 @@ public class BleClientManager {
         context.sendBroadcast(intent);
     }
 
+    /**
+     * 请求后台服务扫描设备
+     * @param context
+     */
     public void startScanningDevices(Context context) {
         sendBroadcast(context, REQUEST_SCAN_DEVICE);
     }
 
+    /**
+     * 请求后台服务停止扫描设备
+     * @param context
+     */
     public void stopScanningDevices(Context context){
         sendBroadcast(context, REQUEST_STOP_SCANNING_DEVICE);
     }
 
+    /**
+     * 请求后台服务连接指定设备
+     * @param context
+     * @param device
+     */
     public void connectDevice(Context context,BluetoothDevice device){
-//        sendBroadcast(
-//                context,
-//                REQUEST_CONNECT_DEVICE,
-//                new Pair<String, String>(KEY_BLE_DEVICE_ADDRESS,devAddress));
         Intent intent=new Intent(ACTION_REQUEST_BLE_SERVICE);
         intent.putExtra(KEY_BLE_REQUEST,REQUEST_CONNECT_DEVICE);
         intent.putExtra(BtLibConstants.KEY_BT_DEVICE,device);
         context.sendBroadcast(intent);
     }
 
+    /**
+     * 请求后台服务断开指定设备。后台服务在退出时会自动断开设备，一般不需要开发者操作。
+     * @param context
+     */
     public void disconnectDevice(Context context){
         sendBroadcast(context, REQUEST_DISCONNECT_DEVICE);
     }
 
+    /**
+     * 请求后台服务获取设备的service列表
+     * @param activity
+     */
     public void scanServices(Context activity){
         sendBroadcast(activity, REQUEST_START_DISCOVER_SERVICES);
     }
 
+    /**
+     * 请求后台服务读取设备的char值
+     * @param activity
+     * @param serviceUUID
+     * @param charUUID
+     */
     public void readBtChar(Context activity,String serviceUUID,String charUUID){
         sendBroadcast(
                 activity,
@@ -110,6 +158,13 @@ public class BleClientManager {
         );
     }
 
+    /**
+     * 请求后台服务修改设备的char值
+     * @param context
+     * @param serviceUUID
+     * @param charUUID
+     * @param value
+     */
     public void writeBtChar(Context context,String serviceUUID,String charUUID,byte[] value){
         Intent intent=new Intent(ACTION_REQUEST_BLE_SERVICE);
         intent.putExtra(KEY_BLE_REQUEST, REQUEST_WRITE_CHAR);
@@ -119,6 +174,13 @@ public class BleClientManager {
         context.sendBroadcast(intent);
     }
 
+    /**
+     * 请求后台服务订阅通知。
+     * @param context
+     * @param serviceUUID
+     * @param charUUID
+     * @param descUUID
+     */
     public void registerNotification(Context context,String serviceUUID,String charUUID,String descUUID){
         toggleNotification(
                 context,
@@ -129,6 +191,13 @@ public class BleClientManager {
         );
     }
 
+    /**
+     * 请求后台服务取消订阅通知。
+     * @param context
+     * @param serviceUUID
+     * @param charUUID
+     * @param descUUID
+     */
     public void unRegisterNotification(Context context, String serviceUUID, String charUUID, String descUUID){
         toggleNotification(
                 context,
@@ -149,16 +218,21 @@ public class BleClientManager {
         );
     }
 
+    /**
+     * 停止后台服务，中断与蓝牙设备的连接。通常退出程序时用。
+     * @param context
+     */
     public void killBleBgService(Context context){
         sendBroadcast(context, REQUEST_KILL_BLE_BG_SERVICE);
     }
 
     /**
-     *
+     * 在Activity的onActivityResult调用此函数即可。
      * @param requestCode
      * @param resultCode
      * @param data
-     * @return true will handle this result, false otherwise.
+     * @return true 表示本函数已经处理了本次事件，不需要在Activity的onActivityResult中再做其他处理；
+     * false表示本函数放弃处理本次事件，留给Activity的onActivityResult处理。
      */
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT) {
@@ -172,6 +246,15 @@ public class BleClientManager {
         return false;
     }
 
+    /**
+     * 如果有涉及申请定位权限，必须要在Activity的onRequestPermissionsResult中调用此函数。
+     * @param activity
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     * @return true 表示本函数已经处理了本次事件，不需要在Activity的onRequestPermissionsResult中再做其他处理；
+     * false表示本函数放弃处理本次事件，留给Activity的onRequestPermissionsResult处理。
+     */
     public synchronized boolean onRequestPermissionsResult(final Activity activity, final int requestCode, @NonNull final String[] permissions, @NonNull int[] grantResults) {
         if(requestCode==BtLibConstants.REQUEST_CODE_ACCESS_COARSE_LOCATION){
             int length = permissions.length;
@@ -232,6 +315,11 @@ public class BleClientManager {
         mAlertDialog.show();
     }
 
+    /**
+     * 6.0后蓝牙必须要获取定位权限方可正常运行。这个函数可以向系统申请定位权限。
+     * 这个函数必须和{@link BleClientManager#onRequestPermissionsResult(Activity, int, String[], int[])}一起用。
+     * @param activity
+     */
     public void requestLocationPermission(Activity activity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             activity.requestPermissions(
@@ -240,6 +328,13 @@ public class BleClientManager {
         }
     }
 
+    /**
+     * 请求后台服务读取Descriptor的值
+     * @param context
+     * @param serviceUUID
+     * @param charUUID
+     * @param descUUID
+     */
     public void readDescriptorValue(Context context, String serviceUUID, String charUUID, String descUUID) {
         sendBroadcast(
                 context,
@@ -251,6 +346,9 @@ public class BleClientManager {
     }
 
 
+    /**
+     * 这个广播接受者专门用来接收后台服务返回的各种执行结果，通过{@link BleClientEventHandler}这个回调返回给调用者。
+     */
     private class BleClientManagerBroadcastReceiver extends BroadcastReceiver {
 
         @Override
@@ -260,43 +358,42 @@ public class BleClientManager {
                 case BtLibConstants.EVENT_LOCATION_PERMISSION_NOT_GRANTED:
                     mEventHandler.onLocationPermissionNotGranted();
                     break;
-                case BtLibConstants.EVENT_BT_NOT_SUPPORTED://ok
+                case BtLibConstants.EVENT_BT_NOT_SUPPORTED:
                     mEventHandler.onBtNotSupported();
                     break;
-                case BtLibConstants.EVENT_BLE_NOT_SUPPORTED://ok
+                case BtLibConstants.EVENT_BLE_NOT_SUPPORTED:
                     mEventHandler.onBleNotSupported();
                     break;
-                case BtLibConstants.EVENT_BT_NOT_ENABLE://ok
+                case BtLibConstants.EVENT_BT_NOT_ENABLE:
                     mEventHandler.onBtNotEnabled();
                     break;
-                case EVENT_DEVICES_SCANNING_STARTS://ok
+                case EVENT_DEVICES_SCANNING_STARTS:
                     mEventHandler.onStartScanningDevice();
                     break;
-                case EVENT_DEVICES_SCANNING_STOPS://ok
+                case EVENT_DEVICES_SCANNING_STOPS:
                     mEventHandler.onStopScanningDevice();
                     break;
-                case EVENT_A_DEVICE_IS_SCANNED: {//ok
+                case EVENT_A_DEVICE_IS_SCANNED: {
                     BluetoothDevice device=intent.getParcelableExtra(KEY_BT_DEVICE);
                     int rssi=intent.getIntExtra(KEY_BT_RSSI,-1);
                     byte[] scanRecord=intent.getByteArrayExtra(KEY_SCAN_RECORD);
                     mEventHandler.onDeviceScanned(device,rssi,scanRecord);
                     break;
                 }
-                case EVENT_DEVICE_CONNECTED://ok
+                case EVENT_DEVICE_CONNECTED:
                 {
                     BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
                     mEventHandler.onDeviceConnected(device);
                 }
                     break;
-                case EVENT_DEVICE_DISCONNECT://ok
+                case EVENT_DEVICE_DISCONNECT:
                 {
                     BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
                     mEventHandler.onDeviceDisconnected(device);
                 }
                     break;
-                case EVENT_SERVICES_DISCOVERED://ok
+                case EVENT_SERVICES_DISCOVERED:
                 {
-                    showLog("EVENT_SERVICES_DISCOVERED");
                     BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
                     ArrayList<TgiBtGattService> services = intent.getParcelableArrayListExtra(KEY_GATT_SERVICES);
                     mEventHandler.onServiceDiscover(device,services);
