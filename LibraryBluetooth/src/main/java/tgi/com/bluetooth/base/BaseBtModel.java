@@ -1,13 +1,10 @@
 package tgi.com.bluetooth.base;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-
-import tgi.com.bluetooth.BtLibConstants;
 
 
 public class BaseBtModel {
@@ -30,10 +27,8 @@ public class BaseBtModel {
         return adapter != null && adapter.isEnabled();
     }
 
-    public void enableBt(Activity activity) {
-        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        activity.startActivityForResult(enableBtIntent, BtLibConstants.REQUEST_ENABLE_BT);
+
+    public BluetoothDevice getDeviceByAddress(BluetoothAdapter adapter, String address) {
+        return adapter.getRemoteDevice(address);
     }
-
-
 }

@@ -15,6 +15,13 @@
         android:textAllCaps="false"
         android:onClick="toDevicesList"/>
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="模拟MC场景"
+        android:textAllCaps="false"
+        android:onClick="startMcSimulation"/>
+
 
 
 </LinearLayout>

@@ -8,18 +8,18 @@ import android.os.Parcelable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TgiBtGattService implements Parcelable{
+public class TgiBtGattService implements Parcelable {
     private String mUuid;
     private int mInstanceId;
     private int mType;
-    private ArrayList<TgiBtGattChar> mChars=new ArrayList<>();
+    private ArrayList<TgiBtGattChar> mChars = new ArrayList<>();
 
-    public TgiBtGattService(BluetoothGattService service){
-        mUuid=service.getUuid().toString();
+    public TgiBtGattService(BluetoothGattService service) {
+        mUuid = service.getUuid().toString();
         mInstanceId = service.getInstanceId();
         mType = service.getType();
         List<BluetoothGattCharacteristic> btChars = service.getCharacteristics();
-        for(BluetoothGattCharacteristic btChar:btChars){
+        for (BluetoothGattCharacteristic btChar : btChars) {
             mChars.add(new TgiBtGattChar(btChar));
         }
     }
@@ -59,7 +59,6 @@ public class TgiBtGattService implements Parcelable{
     public ArrayList<TgiBtGattChar> getChars() {
         return mChars;
     }
-
 
 
     @Override

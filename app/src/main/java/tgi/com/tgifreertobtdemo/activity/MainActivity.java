@@ -19,4 +19,9 @@ public class MainActivity extends AppCompatActivity {
     public void toDevicesList(View view) {
         DeviceListActivity.start(this);
     }
+
+    public void startMcSimulation(View view) {
+        MCSimulationActivity.start(this);
+
+    }
 }

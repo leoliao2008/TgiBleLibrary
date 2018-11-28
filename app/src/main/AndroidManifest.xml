@@ -41,7 +41,8 @@
         <activity
             android:name=".activity.CharDetailActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".activity.DescriptorDetailActivity"></activity>
+        <activity android:name=".activity.DescriptorDetailActivity" />
+        <activity android:name=".activity.MCSimulationActivity"></activity>
     </application>
 
 </manifest>

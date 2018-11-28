@@ -15,14 +15,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 import tgi.com.bluetooth.BtLibConstants;
 import tgi.com.bluetooth.bean.TgiBtGattChar;
 import tgi.com.bluetooth.bean.TgiBtGattDescriptor;
-import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.callbacks.BleClientEventCallback;
 import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 
@@ -33,7 +33,8 @@ public class CharDetailActivity extends AppCompatActivity {
     private String mCharUUID;
     private ArrayList<TgiBtGattDescriptor> mDescriptors;
     private BleClientManager mManager;
-    private BleClientEventHandler mHandler=new BleClientEventHandler(){
+    private BleClientEventCallback mEventCallback =new BleClientEventCallback(){
+
         @Override
         public void onCharRead(String uuid, final byte[] value) {
             super.onCharRead(uuid, value);
@@ -83,10 +84,23 @@ public class CharDetailActivity extends AppCompatActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        ProgressDialog.dismiss();
                         mTvWriteResult.setText("Fail to write content...");
                     }
                 });
             }
+        }
+
+        @Override
+        public void onDeviceDisconnected(String name, String address) {
+            super.onDeviceDisconnected(name, address);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ProgressDialog.dismiss();
+                    Toast.makeText(CharDetailActivity.this,"Device disconnected.",Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     };
 
@@ -140,6 +154,7 @@ public class CharDetailActivity extends AppCompatActivity {
         initListView();
 
         mManager=BleClientManager.getInstance();
+        mManager.setupEventCallback(mEventCallback);
 
     }
 
@@ -195,7 +210,7 @@ public class CharDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mManager.onResume(this,mHandler);
+        mManager.registerReceiver(this);
         mManager.readBtChar(this,mServiceUUID,mCharUUID);
         ProgressDialog.show(this,
                 "Reading...",
@@ -209,7 +224,7 @@ public class CharDetailActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mManager.onPause(this);
+        mManager.unRegisterReceiver(this);
     }
 
     @Override

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.MCSimulationActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="蓝牙设备清单"
+        android:gravity="center"
+        android:padding="@dimen/dp_10"
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_red_light"/>
+    <ListView
+        android:id="@+id/activity_mc_simulation_lst_view_devices_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开始扫描"
+        android:onClick="scanDevices"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="@dimen/dp_10"
+        android:gravity="center">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Activate Status Char"
+            android:gravity="center"/>
+        <ToggleButton
+            android:id="@+id/activity_mc_simulation_tg_btn_notification"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textOn="Notification: ON"
+            android:textOff="Notification: OFF"
+            android:textAllCaps="false"/>
+        <tgi.com.tgifreertobtdemo.activity.Led
+            android:id="@+id/activity_mc_simulation_led"
+            android:layout_width="50dp"
+            android:layout_height="50dp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="以下为功能测试"
+        android:gravity="center"
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_red_light"
+        android:padding="@dimen/dp_10"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="待机"
+        android:onClick="sendStopCommand"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启动"
+        android:onClick="sendActivateCommand"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Logs:"
+        android:padding="@dimen/dp_10"
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_red_light"/>
+
+    <ListView
+        android:id="@+id/activity_mc_simulation_lst_view_log"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="5"/>
+
+</LinearLayout>

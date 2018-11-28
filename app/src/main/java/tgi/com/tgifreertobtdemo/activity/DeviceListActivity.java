@@ -18,7 +18,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.callbacks.BleClientEventCallback;
 import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 
@@ -27,7 +27,7 @@ public class DeviceListActivity extends AppCompatActivity {
     private ArrayList<BluetoothDevice> mDevices = new ArrayList<>();
     private ArrayAdapter<BluetoothDevice> mAdapter;
     private BleClientManager mManager;
-    private BleClientEventHandler mEventHandler=new BleClientEventHandler() {
+    private BleClientEventCallback mEventHandler=new BleClientEventCallback() {
         @Override
         public void onLocationPermissionNotGranted() {
             super.onLocationPermissionNotGranted();
@@ -86,13 +86,14 @@ public class DeviceListActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onDeviceScanned(BluetoothDevice device, int rssi, byte[] scanRecord) {
-            super.onDeviceScanned(device, rssi, scanRecord);
-            if(TextUtils.isEmpty(device.getName())){
+        public void onDeviceScanned(String name, String address, int rssi, byte[] scanRecord) {
+            super.onDeviceScanned(name, address, rssi, scanRecord);
+            if(TextUtils.isEmpty(name)){
                 return;
             }
-            updateList(device);
+            updateList(mManager.getDeviceByAddress(DeviceListActivity.this,address));
         }
+
     };
 
     public static void start(Context context) {
@@ -111,12 +112,13 @@ public class DeviceListActivity extends AppCompatActivity {
 
     private void initBleManager() {
         mManager = BleClientManager.getInstance();
+        mManager.setupEventCallback(mEventHandler);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mManager.onResume(this, mEventHandler);
+        mManager.registerReceiver(this);
     }
 
     private void updateList(BluetoothDevice device) {
@@ -141,7 +143,7 @@ public class DeviceListActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mManager.onPause(this);
+        mManager.unRegisterReceiver(this);
     }
 
     @Override

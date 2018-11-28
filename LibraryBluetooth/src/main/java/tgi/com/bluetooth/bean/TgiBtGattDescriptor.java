@@ -7,22 +7,22 @@ import android.os.Parcelable;
 
 import java.util.Arrays;
 
-public class TgiBtGattDescriptor implements Parcelable{
+public class TgiBtGattDescriptor implements Parcelable {
 
-    private  String mUuid;
-    private  byte[] mValue;
-    private  int mPermissions;
-    private  String mBtGattCharUUID;
+    private String mUuid;
+    private byte[] mValue;
+    private int mPermissions;
+    private String mBtGattCharUUID;
 
-    public TgiBtGattDescriptor(BluetoothGattDescriptor descriptor){
+    public TgiBtGattDescriptor(BluetoothGattDescriptor descriptor) {
         mUuid = descriptor.getUuid().toString();
         mValue = descriptor.getValue();
-        if(mValue==null){
-            mValue=new byte[]{};
+        if (mValue == null) {
+            mValue = new byte[]{};
         }
         mPermissions = descriptor.getPermissions();
         BluetoothGattCharacteristic btChar = descriptor.getCharacteristic();
-        mBtGattCharUUID =btChar.getUuid().toString();
+        mBtGattCharUUID = btChar.getUuid().toString();
     }
 
 

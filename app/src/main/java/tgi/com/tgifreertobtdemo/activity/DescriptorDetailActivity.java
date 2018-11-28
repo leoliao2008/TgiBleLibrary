@@ -14,7 +14,7 @@ import android.widget.ToggleButton;
 
 import java.util.ArrayList;
 
-import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.callbacks.BleClientEventCallback;
 import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 
@@ -35,7 +35,7 @@ public class DescriptorDetailActivity extends AppCompatActivity {
     private String mCharUUID;
     private String mDescUUID;
     private BleClientManager mManager;
-    private BleClientEventHandler mEventHandler=new BleClientEventHandler(){
+    private BleClientEventCallback mEventHandler=new BleClientEventCallback(){
         @Override
         public void onDescriptorRead(String serviceUUID, String charUUID, String descUUID, final byte[] value) {
             super.onDescriptorRead(serviceUUID, charUUID, descUUID, value);
@@ -105,8 +105,8 @@ public class DescriptorDetailActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onReceiveNotification(String serviceUUID, String charUUID, final byte[] value) {
-            super.onReceiveNotification(serviceUUID, charUUID, value);
+        public void onNotificationReceived(String serviceUUID, String charUUID, final byte[] value) {
+            super.onNotificationReceived(serviceUUID, charUUID, value);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -114,6 +114,7 @@ public class DescriptorDetailActivity extends AppCompatActivity {
                 }
             });
         }
+
     };
 
     public static void start(Context context,BluetoothDevice device,String serviceUUID,String charUUID,String descUUID) {
@@ -130,6 +131,7 @@ public class DescriptorDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_descriptor_detail);
         mManager=BleClientManager.getInstance();
+        mManager.setupEventCallback(mEventHandler);
         Intent intent = getIntent();
         mDevice=intent.getParcelableExtra(KEY_BT_DEVICE);
         mServiceUUID=intent.getStringExtra(KEY_BLE_SERVICE_UUID);
@@ -218,13 +220,13 @@ public class DescriptorDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mManager.onResume(this,mEventHandler);
+        mManager.registerReceiver(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mManager.onPause(this);
+        mManager.unRegisterReceiver(this);
     }
 
     @Override

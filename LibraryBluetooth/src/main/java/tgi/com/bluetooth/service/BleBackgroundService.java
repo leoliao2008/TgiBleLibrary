@@ -17,6 +17,7 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -57,22 +58,27 @@ public class BleBackgroundService extends Service {
         public void onScanStart() {
             sendBroadcast(genSimpleIntent(EVENT_DEVICES_SCANNING_STARTS));
             mHandler.postDelayed(mRunnableStopScanning, 5000);
-            isScanning=true;
+            isScanning = true;
         }
 
         @Override
         public void onScanStop() {
             sendBroadcast(genSimpleIntent(EVENT_DEVICES_SCANNING_STOPS));
             mHandler.removeCallbacks(mRunnableStopScanning);
-            isScanning=false;
+            isScanning = false;
         }
 
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
             Intent intent = genSimpleIntent(EVENT_A_DEVICE_IS_SCANNED);
-            intent.putExtra(BtLibConstants.KEY_BT_DEVICE,device);
-            intent.putExtra(BtLibConstants.KEY_BT_RSSI,rssi);
-            intent.putExtra(BtLibConstants.KEY_SCAN_RECORD,scanRecord);
+            String name = device.getName();
+            if (TextUtils.isEmpty(name)) {
+                name = "Unknown Device";
+            }
+            intent.putExtra(BtLibConstants.KEY_BLE_DEVICE_NAME, name);
+            intent.putExtra(BtLibConstants.KEY_BLE_DEVICE_ADDRESS, device.getAddress());
+            intent.putExtra(BtLibConstants.KEY_BT_RSSI, rssi);
+            intent.putExtra(BtLibConstants.KEY_SCAN_RECORD, scanRecord);
             sendBroadcast(intent);
         }
     };
@@ -82,31 +88,31 @@ public class BleBackgroundService extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
+            showLog("onConnectionStateChange status=" + status + " newSate=" + newState);
             if (status == GATT_SUCCESS && newState == STATE_CONNECTED) {
-                broadcastConnectDeviceSuccess(gatt.getDevice());
-            } else if (status == GATT_SUCCESS && newState == STATE_DISCONNECTED) {
-                mDevice=null;
-                Intent intent = genSimpleIntent(EVENT_DEVICE_DISCONNECT);
-                intent.putExtra(KEY_BT_DEVICE,gatt.getDevice());
-                sendBroadcast(intent);
-                gatt.close();
+                //紧接着更新service清单，如果不更新，无法读取/修改char的值。这个时候设备还不算连接成功。
+                if (!gatt.discoverServices()) {
+                    showLog("onConnectionStateChange discoverServices false");
+                    mBleClientModel.disconnectLeDevice(gatt);
+                }
+            } else if (newState == STATE_DISCONNECTED) {
+                showLog("onConnectionStateChange STATE_DISCONNECTED");
+                onDeviceDisconnect(gatt);
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             super.onServicesDiscovered(gatt, status);
+            //只有在这里返回成功，才算是设备连接成功。
             if (status == GATT_SUCCESS) {
-                BluetoothDevice device = gatt.getDevice();
-                Intent intent = genSimpleIntent(EVENT_SERVICES_DISCOVERED);
-                intent.putExtra(KEY_BT_DEVICE,device);
-                List<BluetoothGattService> services = gatt.getServices();
-                ArrayList<TgiBtGattService> tgiBtGattServices=new ArrayList<>();
-                for(BluetoothGattService temp:services){
-                    tgiBtGattServices.add(new TgiBtGattService(temp));
-                }
-                intent.putParcelableArrayListExtra(BtLibConstants.KEY_GATT_SERVICES,tgiBtGattServices);
-                sendBroadcast(intent);
+                mBleClientModel.paireDevice(gatt.getDevice());
+                broadcastConnectDeviceSuccess(gatt);
+            } else if (status == GATT_FAILURE) {
+                //连接失败。
+                showLog("onServicesDiscovered status == GATT_FAILURE");
+                broadcastConnectDeviceFailure(gatt);
+//                mBleClientModel.disconnectLeDevice(gatt);
             }
         }
 
@@ -117,7 +123,7 @@ public class BleBackgroundService extends Service {
             if (value == null) {
                 value = new byte[]{};
             }
-            if (status==GATT_SUCCESS){
+            if (status == GATT_SUCCESS) {
                 String uuid = characteristic.getUuid().toString();
                 Intent intent = genSimpleIntent(EVENT_CHAR_READ);
                 intent.putExtra(KEY_BLE_CHAR_UUID, uuid);
@@ -138,7 +144,7 @@ public class BleBackgroundService extends Service {
             String serviceUUID = characteristic.getService().getUuid().toString();
             Intent intent = genSimpleIntent(EVENT_BLE_CHAR_WRITTEN);
             intent.putExtra(KEY_BLE_CHAR_UUID, charUUID);
-            intent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
+            intent.putExtra(KEY_BLE_SERVICE_UUID, serviceUUID);
             intent.putExtra(KEY_BLE_CHAR_VALUE, value);
             sendBroadcast(intent);
         }
@@ -154,7 +160,7 @@ public class BleBackgroundService extends Service {
             String serviceUUID = characteristic.getService().getUuid().toString();
             Intent intent = genSimpleIntent(EVENT_NOTIFICATION_TRIGGERED);
             intent.putExtra(KEY_BLE_CHAR_UUID, charUUID);
-            intent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
+            intent.putExtra(KEY_BLE_SERVICE_UUID, serviceUUID);
             intent.putExtra(KEY_BLE_CHAR_VALUE, value);
             sendBroadcast(intent);
         }
@@ -166,19 +172,19 @@ public class BleBackgroundService extends Service {
             String serviceUUID = btChar.getService().getUuid().toString();
             String charUUID = btChar.getUuid().toString();
             String descUUID = descriptor.getUuid().toString();
-            if(status==GATT_SUCCESS){
+            if (status == GATT_SUCCESS) {
                 byte[] value = descriptor.getValue();
-                if(value==null||value.length==0){
-                    value=new byte[]{};
+                if (value == null || value.length == 0) {
+                    value = new byte[]{};
                 }
                 Intent simpleIntent = genSimpleIntent(BtLibConstants.EVENT_BLE_DESCRIPTOR_IS_READ);
-                simpleIntent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
-                simpleIntent.putExtra(KEY_BLE_CHAR_UUID,charUUID);
-                simpleIntent.putExtra(KEY_BLE_DESC_UUID,descUUID);
-                simpleIntent.putExtra(BtLibConstants.KEY_BLE_DESC_VALUE,value);
+                simpleIntent.putExtra(KEY_BLE_SERVICE_UUID, serviceUUID);
+                simpleIntent.putExtra(KEY_BLE_CHAR_UUID, charUUID);
+                simpleIntent.putExtra(KEY_BLE_DESC_UUID, descUUID);
+                simpleIntent.putExtra(BtLibConstants.KEY_BLE_DESC_VALUE, value);
                 sendBroadcast(simpleIntent);
-            }else {
-                broadcastReadDescriptorFails(serviceUUID,charUUID,descUUID);
+            } else {
+                broadcastReadDescriptorFails(serviceUUID, charUUID, descUUID);
             }
         }
 
@@ -195,13 +201,13 @@ public class BleBackgroundService extends Service {
             Intent intent = null;
             //set up notification
             if (Arrays.equals(value, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-                if(status==GATT_SUCCESS){
+                if (status == GATT_SUCCESS) {
                     intent = genSimpleIntent(BtLibConstants.EVENT_BLE_NOTIFICATION_IS_REGISTERED);
-                    intent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
-                    intent.putExtra(KEY_BLE_CHAR_UUID,charUUID);
-                    intent.putExtra(KEY_BLE_DESC_UUID,descUUID);
+                    intent.putExtra(KEY_BLE_SERVICE_UUID, serviceUUID);
+                    intent.putExtra(KEY_BLE_CHAR_UUID, charUUID);
+                    intent.putExtra(KEY_BLE_DESC_UUID, descUUID);
                     sendBroadcast(intent);
-                }else if(status==GATT_FAILURE) {
+                } else if (status == GATT_FAILURE) {
                     broadcastSetNotificationFails(
                             true,
                             serviceUUID,
@@ -209,13 +215,13 @@ public class BleBackgroundService extends Service {
                             descUUID);
                 }
             } else if (Arrays.equals(value, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
-                if(status==GATT_SUCCESS){
+                if (status == GATT_SUCCESS) {
                     intent = genSimpleIntent(BtLibConstants.EVENT_BLE_NOTIFICATION_IS_UNREGISTERED);
-                    intent.putExtra(KEY_BLE_SERVICE_UUID,serviceUUID);
-                    intent.putExtra(KEY_BLE_CHAR_UUID,charUUID);
-                    intent.putExtra(KEY_BLE_DESC_UUID,descUUID);
+                    intent.putExtra(KEY_BLE_SERVICE_UUID, serviceUUID);
+                    intent.putExtra(KEY_BLE_CHAR_UUID, charUUID);
+                    intent.putExtra(KEY_BLE_DESC_UUID, descUUID);
                     sendBroadcast(intent);
-                }else if(status==GATT_FAILURE){
+                } else if (status == GATT_FAILURE) {
                     broadcastSetNotificationFails(
                             false,
                             serviceUUID,
@@ -225,6 +231,40 @@ public class BleBackgroundService extends Service {
             }
         }
     };
+
+    private void broadcastConnectDeviceFailure(BluetoothGatt gatt) {
+        Intent intent = genSimpleIntent(BtLibConstants.EVENT_DEVICE_FAILS_TO_CONNECT);
+        String address = gatt.getDevice().getAddress();
+        String name = gatt.getDevice().getName();
+        if(TextUtils.isEmpty(name)){
+            name="UNKNOWN DEVICE";
+        }
+        intent.putExtra(BtLibConstants.KEY_BLE_DEVICE_NAME,name);
+        intent.putExtra(BtLibConstants.KEY_BLE_DEVICE_ADDRESS,address);
+        sendBroadcast(intent);
+    }
+
+    private void onDeviceDisconnect(BluetoothGatt gatt) {
+        Intent intent = genSimpleIntent(EVENT_DEVICE_DISCONNECT);
+        BluetoothDevice device = gatt.getDevice();
+        intent.putExtra(KEY_BLE_DEVICE_ADDRESS, device.getAddress());
+        String name = device.getName();
+        if (TextUtils.isEmpty(name)) {
+            name = "UNKNOWN DEVICE";
+        }
+        intent.putExtra(KEY_BLE_DEVICE_NAME, name);
+        sendBroadcast(intent);
+        mDevice = null;
+        mBluetoothGatt = null;
+    }
+
+    private String genHexString(byte[] value) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : value) {
+            sb.append(String.format("%#02x", b)).append(" ");
+        }
+        return sb.toString();
+    }
 
 
     private BluetoothDevice mDevice;
@@ -240,11 +280,11 @@ public class BleBackgroundService extends Service {
         super.onCreate();
         mHandler = new Handler(Looper.getMainLooper());
         mBleClientModel = new BleClientModel();
-        if(isBleSupported()){
+        if (isBleSupported()) {
             mReceiver = new BleServiceBroadcastReceiver();
-            mBtAdapter=mBleClientModel.getBtAdapter(this);
+            mBtAdapter = mBleClientModel.getBtAdapter(this);
             registerReceiver(mReceiver, new IntentFilter(ACTION_REQUEST_BLE_SERVICE));
-        }else {
+        } else {
             stopSelf();
         }
     }
@@ -254,10 +294,10 @@ public class BleBackgroundService extends Service {
     }
 
     private boolean isBleSupported() {
-        if(!mBleClientModel.isBtSupported(this)){
+        if (!mBleClientModel.isBtSupported(this)) {
             sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_BT_NOT_SUPPORTED));
             return false;
-        }else if(!mBleClientModel.hasBleFeature(this)){
+        } else if (!mBleClientModel.hasBleFeature(this)) {
             sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_BLE_NOT_SUPPORTED));
             return false;
         }
@@ -270,9 +310,10 @@ public class BleBackgroundService extends Service {
             unregisterReceiver(mReceiver);
             mReceiver = null;
         }
-        if(mBluetoothGatt!=null){
+        if (mBluetoothGatt != null) {
             mBleClientModel.disconnectLeDevice(mBluetoothGatt);
-            mBluetoothGatt=null;
+            mDevice = null;
+            mBluetoothGatt = null;
         }
         super.onDestroy();
     }
@@ -304,27 +345,33 @@ public class BleBackgroundService extends Service {
         public void onReceive(Context context, Intent intent) {
 
             //if location permission is not granted, need to grant first.
-            if(getPackageManager().checkPermission(
+            if (getPackageManager().checkPermission(
                     Manifest.permission.ACCESS_COARSE_LOCATION,
-                    getPackageName())!=PackageManager.PERMISSION_GRANTED){
+                    getPackageName()) != PackageManager.PERMISSION_GRANTED) {
                 sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_LOCATION_PERMISSION_NOT_GRANTED));
                 return;
             }
             //if bt not yet enabled, need to enable first.
-            if(!isBtEnable()){
+            if (!isBtEnable()) {
                 sendBroadcast(genSimpleIntent(BtLibConstants.EVENT_BT_NOT_ENABLE));
                 return;
             }
             String request = intent.getStringExtra(KEY_BLE_REQUEST);
+            String address = intent.getStringExtra(KEY_BLE_DEVICE_ADDRESS);
             switch (request) {
                 case REQUEST_SCAN_DEVICE:
                     if (!isScanning) {
                         //first display bonded devices because sometimes you can't find bonded devices
                         //via scanning.
                         ArrayList<BluetoothDevice> bondedDevices = mBleClientModel.getBondedDevices(mBtAdapter);
-                        for(BluetoothDevice temp:bondedDevices){
+                        for (BluetoothDevice temp : bondedDevices) {
                             Intent simpleIntent = genSimpleIntent(EVENT_A_DEVICE_IS_SCANNED);
-                            simpleIntent.putExtra(BtLibConstants.KEY_BT_DEVICE,temp);
+                            simpleIntent.putExtra(BtLibConstants.KEY_BLE_DEVICE_ADDRESS, temp.getAddress());
+                            String name = temp.getName();
+                            if (TextUtils.isEmpty(name)) {
+                                name = "UNKNOWN DEVICE";
+                            }
+                            simpleIntent.putExtra(BtLibConstants.KEY_BLE_DEVICE_NAME, name);
                             sendBroadcast(intent);
                         }
                         mBleClientModel.startScanningLeDevice(mBtAdapter, mScanCallback);
@@ -335,23 +382,25 @@ public class BleBackgroundService extends Service {
                         mBleClientModel.stopScanningLeDevice(mBtAdapter, mScanCallback);
                     }
                     break;
-                case REQUEST_CONNECT_DEVICE:
-                {
-                    BluetoothDevice device = intent.getParcelableExtra(KEY_BT_DEVICE);
-                    //if the device is already connected, return success.
-                    if (mDevice != null && mDevice.getAddress().equals(device.getAddress())) {
-                        broadcastConnectDeviceSuccess(device);
-                        return;
+                case REQUEST_CONNECT_DEVICE: {
+                    showLog("Begin to connect device.");
+                    BluetoothDevice device = mBleClientModel.getDeviceByAddress(mBtAdapter, address);
+                    showLog("Request: Device name=" + device.getName() + " device address=" + device.getAddress());
+                    if (mBluetoothGatt != null) {
+                        //if the device is already connected, return success.
+                        if (mDevice != null && mDevice.getAddress().equals(address)) {
+                            broadcastConnectDeviceSuccess(mBluetoothGatt);
+                            return;
+                        } else {
+                            //else disconnect previous device.
+                            mBleClientModel.disconnectLeDevice(mBluetoothGatt);
+                        }
                     }
-                    //else disconnect previous device.
-                    if (mBluetoothGatt!=null) {
-                        mBleClientModel.disconnectLeDevice(mBluetoothGatt);
-                    }
+
                     //build a new connection with the new device.
-                    mDevice = device;
                     mBluetoothGatt = mBleClientModel.connectToLeDevice(
                             getApplicationContext(),
-                            mDevice,
+                            device,
                             mGattCallback
                     );
                 }
@@ -361,18 +410,10 @@ public class BleBackgroundService extends Service {
                         mBleClientModel.disconnectLeDevice(mBluetoothGatt);
                     }
                     break;
-                case BtLibConstants.REQUEST_START_DISCOVER_SERVICES:
-                {
-                    boolean isSuccess = mBleClientModel.startDiscoveringServices(mBluetoothGatt);
-                    if(!isSuccess){
-                        Intent simpleIntent = genSimpleIntent(BtLibConstants.EVENT_BT_FAIL_TO_DISCOVER_SERVICE);
-                        simpleIntent.putExtra(KEY_BT_DEVICE,mBluetoothGatt.getDevice());
-                        sendBroadcast(simpleIntent);
+                case REQUEST_READ_CHAR: {
+                    if(mBluetoothGatt==null){
+                        return;
                     }
-                }
-                    break;
-                case REQUEST_READ_CHAR:
-                {
                     boolean isSuccess = false;
                     String svUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
                     String btCharUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
@@ -385,44 +426,60 @@ public class BleBackgroundService extends Service {
                     }
                     if (!isSuccess) {
                         Intent simpleIntent = genSimpleIntent(EVENT_BLE_READ_CHAR_FAILS);
-                        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID,svUUID);
-                        simpleIntent.putExtra(KEY_BLE_CHAR_UUID,btCharUUID);
+                        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID, svUUID);
+                        simpleIntent.putExtra(KEY_BLE_CHAR_UUID, btCharUUID);
                         sendBroadcast(simpleIntent);
                     }
                 }
                 break;
-                case REQUEST_WRITE_CHAR:
-                {
+                case REQUEST_WRITE_CHAR: {
+                    if(mBluetoothGatt==null){
+                        return;
+                    }
+                    showLog("REQUEST_WRITE_CHAR 1");
                     boolean isSuccess = false;
                     String svUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
                     String btCharUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
                     byte[] value = intent.getByteArrayExtra(KEY_BLE_CHAR_VALUE);
+                    showLog("REQUEST_WRITE_CHAR service uuid=" + svUUID);
+                    showLog("REQUEST_WRITE_CHAR char uuid=" + btCharUUID);
                     BluetoothGattService service = mBluetoothGatt.getService(UUID.fromString(svUUID));
                     if (service != null) {
                         BluetoothGattCharacteristic btChar = service.getCharacteristic(UUID.fromString(btCharUUID));
                         if (btChar != null) {
+                            showLog("REQUEST_WRITE_CHAR 2");
                             isSuccess = mBleClientModel.writeCharacteristic(
                                     mBluetoothGatt,
                                     btChar,
                                     value
                             );
+                        } else {
+                            showLog("REQUEST_WRITE_CHAR char cannot be found!");
                         }
+                    } else {
+                        showLog("REQUEST_WRITE_CHAR Service cannot be found!");
                     }
                     if (!isSuccess) {
+                        showLog("REQUEST_WRITE_CHAR Fail!");
                         Intent simpleIntent = genSimpleIntent(EVENT_BLE_WRITE_CHAR_FAILS);
-                        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID,svUUID);
-                        simpleIntent.putExtra(KEY_BLE_CHAR_UUID,btCharUUID);
-                        simpleIntent.putExtra(KEY_BLE_CHAR_VALUE,value);
+                        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID, svUUID);
+                        simpleIntent.putExtra(KEY_BLE_CHAR_UUID, btCharUUID);
+                        simpleIntent.putExtra(KEY_BLE_CHAR_VALUE, value);
                         sendBroadcast(simpleIntent);
                     }
+
+
                 }
                 break;
                 case REQUEST_REGISTER_NOTIFICATION:
-                case REQUEST_UNREGISTER_NOTIFICATION:
-                {
+                case REQUEST_UNREGISTER_NOTIFICATION: {
                     {
+                        if(mBluetoothGatt==null){
+                            return;
+                        }
                         boolean isSuccess = false;
                         boolean isToEnable = request.equals(REQUEST_REGISTER_NOTIFICATION);
+                        showLog(isToEnable ? "REQUEST_REGISTER_NOTIFICATION" : "REQUEST_UNREGISTER_NOTIFICATION");
                         String svUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
                         String btCharUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
                         String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
@@ -442,14 +499,17 @@ public class BleBackgroundService extends Service {
                                 }
                             }
                         }
-                        if(!isSuccess){
-                            broadcastSetNotificationFails(isToEnable,svUUID,btCharUUID,descUUID);
+                        if (!isSuccess) {
+                            showLog(isSuccess ? "REQUEST_REGISTER_NOTIFICATION success" : "REQUEST_REGISTER_NOTIFICATION fails");
+                            broadcastSetNotificationFails(isToEnable, svUUID, btCharUUID, descUUID);
                         }
                     }
                 }
-                    break;
-                case REQUEST_READ_DESCRIPTOR_VALUE:
-                {
+                break;
+                case REQUEST_READ_DESCRIPTOR_VALUE: {
+                    if(mBluetoothGatt==null){
+                        return;
+                    }
                     String svUUID = intent.getStringExtra(KEY_BLE_SERVICE_UUID);
                     String btCharUUID = intent.getStringExtra(KEY_BLE_CHAR_UUID);
                     String descUUID = intent.getStringExtra(KEY_BLE_DESC_UUID);
@@ -459,11 +519,11 @@ public class BleBackgroundService extends Service {
                                     .getCharacteristic(UUID.fromString(btCharUUID))
                                     .getDescriptor(UUID.fromString(descUUID))
                     );
-                    if(!isSuccess){
-                        broadcastReadDescriptorFails(svUUID,btCharUUID,descUUID);
+                    if (!isSuccess) {
+                        broadcastReadDescriptorFails(svUUID, btCharUUID, descUUID);
                     }
                 }
-                    break;
+                break;
                 case REQUEST_KILL_BLE_BG_SERVICE:
                     stopSelf();
                     break;
@@ -476,33 +536,47 @@ public class BleBackgroundService extends Service {
 
     private void broadcastReadDescriptorFails(String svUUID, String btCharUUID, String descUUID) {
         Intent simpleIntent = genSimpleIntent(BtLibConstants.EVENT_READ_DESCRIPTOR_FAILS);
-        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID,svUUID);
-        simpleIntent.putExtra(KEY_BLE_CHAR_UUID,btCharUUID);
-        simpleIntent.putExtra(KEY_BLE_DESC_UUID,descUUID);
+        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID, svUUID);
+        simpleIntent.putExtra(KEY_BLE_CHAR_UUID, btCharUUID);
+        simpleIntent.putExtra(KEY_BLE_DESC_UUID, descUUID);
         sendBroadcast(simpleIntent);
     }
 
     private void broadcastSetNotificationFails(
-            boolean isToEnable,String svUUID, String btCharUUID, String descUUID) {
+            boolean isToEnable, String svUUID, String btCharUUID, String descUUID) {
         Intent simpleIntent;
-        if(isToEnable){
-            simpleIntent= genSimpleIntent(BtLibConstants.EVENT_REGISTER_NOTIFICATION_FAILS);
-        }else {
-            simpleIntent= genSimpleIntent(BtLibConstants.EVENT_UNREGISTER_NOTIFICATION_FAILS);
+        if (isToEnable) {
+            simpleIntent = genSimpleIntent(BtLibConstants.EVENT_REGISTER_NOTIFICATION_FAILS);
+        } else {
+            simpleIntent = genSimpleIntent(BtLibConstants.EVENT_UNREGISTER_NOTIFICATION_FAILS);
         }
-        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID,svUUID);
-        simpleIntent.putExtra(KEY_BLE_CHAR_UUID,btCharUUID);
-        simpleIntent.putExtra(KEY_BLE_DESC_UUID,descUUID);
+        simpleIntent.putExtra(KEY_BLE_SERVICE_UUID, svUUID);
+        simpleIntent.putExtra(KEY_BLE_CHAR_UUID, btCharUUID);
+        simpleIntent.putExtra(KEY_BLE_DESC_UUID, descUUID);
         sendBroadcast(simpleIntent);
     }
 
-    private void broadcastConnectDeviceSuccess(BluetoothDevice device) {
-        Intent simpleIntent = genSimpleIntent(EVENT_DEVICE_CONNECTED);
-        simpleIntent.putExtra(BtLibConstants.KEY_BT_DEVICE,device);
-        sendBroadcast(simpleIntent);
+    private void broadcastConnectDeviceSuccess(BluetoothGatt gatt) {
+        showLog("onServicesDiscovered status == GATT_SUCCESS");
+        BluetoothDevice device = gatt.getDevice();
+        mDevice = device;
+        Intent intent = genSimpleIntent(EVENT_DEVICE_CONNECTED);
+        intent.putExtra(KEY_BLE_DEVICE_ADDRESS, device.getAddress());
+        String name = device.getName();
+        if (TextUtils.isEmpty(name)) {
+            name = "UNKNOWN DEVICE";
+        }
+        intent.putExtra(KEY_BLE_DEVICE_NAME, name);
+        List<BluetoothGattService> services = gatt.getServices();
+        ArrayList<TgiBtGattService> tgiBtGattServices = new ArrayList<>();
+        for (BluetoothGattService temp : services) {
+            tgiBtGattServices.add(new TgiBtGattService(temp));
+        }
+        intent.putParcelableArrayListExtra(BtLibConstants.KEY_GATT_SERVICES, tgiBtGattServices);
+        sendBroadcast(intent);
     }
 
     private void showLog(String msg) {
-        Log.e(getClass().getSimpleName(), msg);
+        Log.e(getClass().getSimpleName() + "/Leo", msg);
     }
 }

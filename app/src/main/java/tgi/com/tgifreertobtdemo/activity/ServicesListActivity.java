@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 import tgi.com.bluetooth.BtLibConstants;
 import tgi.com.bluetooth.bean.TgiBtGattService;
-import tgi.com.bluetooth.callbacks.BleClientEventHandler;
+import tgi.com.bluetooth.callbacks.BleClientEventCallback;
 import tgi.com.bluetooth.manager.BleClientManager;
 import tgi.com.tgifreertobtdemo.R;
 
@@ -31,23 +31,11 @@ public class ServicesListActivity extends AppCompatActivity {
     private BleClientManager mManager;
     private ArrayList<TgiBtGattService> mServices=new ArrayList<>();
     private ListView mListView;
-    private BleClientEventHandler mHandler=new BleClientEventHandler(){
-        @Override
-        public void onDeviceConnected(BluetoothDevice device) {
-            super.onDeviceConnected(device);
-            ProgressDialog.show(
-                    ServicesListActivity.this,
-                    "Discovering",
-                    "Discovering services, please wait...",
-                    true,
-                    null
-            );
-            mManager.scanServices(ServicesListActivity.this);
-        }
+    private BleClientEventCallback mEventCallback =new BleClientEventCallback(){
 
         @Override
-        public void onServiceDiscover(BluetoothDevice device, final ArrayList<TgiBtGattService> services) {
-            super.onServiceDiscover(device, services);
+        public void onDeviceConnected(String deviceName, String deviceAddress, final ArrayList<TgiBtGattService> services) {
+            super.onDeviceConnected(deviceName, deviceAddress, services);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -60,16 +48,19 @@ public class ServicesListActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onFailToDiscoverService(BluetoothDevice device) {
-            super.onFailToDiscoverService(device);
+        public void onDeviceConnectFails(String deviceName, String deviceAddress) {
+            super.onDeviceConnectFails(deviceName, deviceAddress);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     ProgressDialog.dismiss();
-                    Toast.makeText(ServicesListActivity.this,"Fail To Discover Service",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ServicesListActivity.this,"Fail To Connect Device.",Toast.LENGTH_SHORT).show();
                 }
             });
         }
+
+
+
     };
     private ArrayAdapter mAdapter;
     private TextView mTvDeviceInfo;
@@ -87,6 +78,7 @@ public class ServicesListActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("Services List");
         initListView();
         mManager=BleClientManager.getInstance();
+        mManager.setupEventCallback(mEventCallback);
         mDevice = getIntent().getParcelableExtra(BtLibConstants.KEY_BT_DEVICE);
         String name = mDevice.getName();
         String address = mDevice.getAddress();
@@ -102,7 +94,7 @@ public class ServicesListActivity extends AppCompatActivity {
                         .append("Address: ")
                         .append(address).toString()
         );
-        mManager.connectDevice(this,mDevice);
+        mManager.connectDevice(this,mDevice.getAddress());
         ProgressDialog.show(
                 this,
                 "Connecting",
@@ -144,14 +136,14 @@ public class ServicesListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mManager.onResume(this,mHandler);
+        mManager.registerReceiver(this);
     }
 
 
     @Override
     protected void onPause() {
         super.onPause();
-        mManager.onPause(this);
+        mManager.unRegisterReceiver(this);
     }
 
     @Override

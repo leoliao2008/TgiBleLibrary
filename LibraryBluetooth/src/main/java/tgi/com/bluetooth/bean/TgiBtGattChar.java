@@ -11,31 +11,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TgiBtGattChar implements Parcelable{
+public class TgiBtGattChar implements Parcelable {
 
-    private  String mUuid;
-    private  String mServiceUUID;
-    private  byte[] mValue;
-    private  int mInstanceId;
-    private  int mPermissions;
-    private  int mProperties;
-    private  int mWriteType;
-    private ArrayList<TgiBtGattDescriptor> mDescriptors=new ArrayList<>();
+    private String mUuid;
+    private String mServiceUUID;
+    private byte[] mValue;
+    private int mInstanceId;
+    private int mPermissions;
+    private int mProperties;
+    private int mWriteType;
+    private ArrayList<TgiBtGattDescriptor> mDescriptors = new ArrayList<>();
 
-    public TgiBtGattChar(BluetoothGattCharacteristic btChar){
+    public TgiBtGattChar(BluetoothGattCharacteristic btChar) {
         mUuid = btChar.getUuid().toString();
         BluetoothGattService service = btChar.getService();
         mServiceUUID = service.getUuid().toString();
         mValue = btChar.getValue();
-        if(mValue==null){
-            mValue=new byte[]{0};
+        if (mValue == null) {
+            mValue = new byte[]{0};
         }
         mInstanceId = btChar.getInstanceId();
         mPermissions = btChar.getPermissions();
         mProperties = btChar.getProperties();
         mWriteType = btChar.getWriteType();
         List<BluetoothGattDescriptor> descriptors = btChar.getDescriptors();
-        for(BluetoothGattDescriptor temp:descriptors){
+        for (BluetoothGattDescriptor temp : descriptors) {
             mDescriptors.add(new TgiBtGattDescriptor(temp));
         }
     }

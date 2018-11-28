@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
@@ -22,6 +23,31 @@ public class BleClientModel extends BaseBtModel {
 
     public boolean hasBleFeature(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+    }
+
+    public boolean paireDevice(BluetoothDevice device) {
+        try {
+            Method createBondMethod = BluetoothDevice.class
+                    .getMethod("createBond");
+            Boolean result = (Boolean) createBondMethod.invoke(device);
+            return result;
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.getStackTrace();
+        }
+        return false;
+    }
+
+    public boolean removeBond(BluetoothDevice btDevice){
+        Method removeBondMethod = null;
+        try {
+            removeBondMethod = BluetoothDevice.class.getMethod("removeBond");
+            Boolean returnValue = (Boolean) removeBondMethod.invoke(btDevice);
+            return returnValue.booleanValue();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public void startScanningLeDevice(BluetoothAdapter adapter, BleDeviceScanCallback callback) {
@@ -39,22 +65,22 @@ public class BleClientModel extends BaseBtModel {
         return device.connectGatt(context, false, callback);
     }
 
-    public BluetoothDevice getBluetoothDevice(BluetoothAdapter adapter,String deviceAddress){
-        return adapter.getRemoteDevice(deviceAddress);
+    public BluetoothDevice getBluetoothDevice(BluetoothAdapter adapter, String deviceAddress) {
+        return adapter.getRemoteDevice(deviceAddress.toUpperCase());
     }
 
 
-    public void disconnectLeDevice(BluetoothGatt btGatt){
+    public void disconnectLeDevice(BluetoothGatt btGatt) {
         btGatt.disconnect();
         btGatt.close();
     }
 
-    public boolean startDiscoveringServices(BluetoothGatt btGatt){
+    public boolean startDiscoveringServices(BluetoothGatt btGatt) {
         return btGatt.discoverServices();
     }
 
 
-    public BluetoothGattCharacteristic getBluetoothGattCharacteristic(BluetoothGattService service, String btCharUUID){
+    public BluetoothGattCharacteristic getBluetoothGattCharacteristic(BluetoothGattService service, String btCharUUID) {
         return service.getCharacteristic(UUID.fromString(btCharUUID));
     }
 
@@ -62,7 +88,7 @@ public class BleClientModel extends BaseBtModel {
         return bluetoothGatt.readCharacteristic(btChar);
     }
 
-    public BluetoothGattDescriptor getDescriptor(BluetoothGattCharacteristic btChar,String descriptorUUID){
+    public BluetoothGattDescriptor getDescriptor(BluetoothGattCharacteristic btChar, String descriptorUUID) {
         return btChar.getDescriptor(UUID.fromString(descriptorUUID));
     }
 
@@ -74,18 +100,18 @@ public class BleClientModel extends BaseBtModel {
             BluetoothGatt gatt,
             boolean isToEnable,
             BluetoothGattCharacteristic btChar,
-            BluetoothGattDescriptor descriptor){
+            BluetoothGattDescriptor descriptor) {
 
-        gatt.setCharacteristicNotification(btChar,isToEnable);
-        if(isToEnable){
+        gatt.setCharacteristicNotification(btChar, isToEnable);
+        if (isToEnable) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        }else {
+        } else {
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         }
         return gatt.writeDescriptor(descriptor);
     }
 
-    public boolean writeCharacteristic(BluetoothGatt bluetoothGatt,BluetoothGattCharacteristic btChar, byte[] value) {
+    public boolean writeCharacteristic(BluetoothGatt bluetoothGatt, BluetoothGattCharacteristic btChar, byte[] value) {
         btChar.setValue(value);
         return bluetoothGatt.writeCharacteristic(btChar);
     }
