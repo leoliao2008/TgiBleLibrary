@@ -38,6 +38,8 @@ public class MCSimulationActivity extends AppCompatActivity {
     private static final String TEST_LINE="{\"time\":60000,\"message\":\"550FA10100010000000000000007AA\",\"timestamp\":\"04122018071159381\"}";
     private MCSimulationActivity mThis = this;
     private ListView mLsvDevicesList;
+
+
     private EditText mEdtInputCommand;
     private ListView mLsvLogs;
     private ToggleButton mTgBtnNotification;
