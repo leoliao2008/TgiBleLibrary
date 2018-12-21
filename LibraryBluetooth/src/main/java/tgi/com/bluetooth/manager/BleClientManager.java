@@ -79,6 +79,7 @@ public class BleClientManager {
         activity.startActivityForResult(intent, REQUEST_ENABLE_BT);
     }
 
+
     /**
      * 启动系统蓝牙。可以不通过用户授权，直接打开蓝牙。但这种开法没有在系统层面授予APP蓝牙权限，因此只能打开一次。
      */
@@ -538,7 +539,6 @@ public class BleClientManager {
                 }
                 default:
                     break;
-
 
             }
 

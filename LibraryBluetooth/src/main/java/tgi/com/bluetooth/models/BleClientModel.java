@@ -25,7 +25,7 @@ public class BleClientModel extends BaseBtModel {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
     }
 
-    public boolean paireDevice(BluetoothDevice device) {
+    public boolean pairDevice(BluetoothDevice device) {
         try {
             Method createBondMethod = BluetoothDevice.class
                     .getMethod("createBond");

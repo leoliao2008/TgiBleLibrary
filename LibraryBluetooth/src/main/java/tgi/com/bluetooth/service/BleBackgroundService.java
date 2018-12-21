@@ -106,7 +106,7 @@ public class BleBackgroundService extends Service {
             super.onServicesDiscovered(gatt, status);
             //只有在这里返回成功，才算是设备连接成功。
             if (status == GATT_SUCCESS) {
-                mBleClientModel.paireDevice(gatt.getDevice());
+                mBleClientModel.pairDevice(gatt.getDevice());
                 broadcastConnectDeviceSuccess(gatt);
             } else if (status == GATT_FAILURE) {
                 //连接失败。

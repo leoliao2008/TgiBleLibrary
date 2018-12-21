@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ESP_BT_TEST</string>
+    <string name="test_line">{"time":60000,"message":"550FA10100010000000000000007AA","timestamp":"04122018071159381"}</string>
 </resources>

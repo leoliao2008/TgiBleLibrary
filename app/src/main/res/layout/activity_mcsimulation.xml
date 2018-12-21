@@ -1,51 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.MCSimulationActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".activity.MCSimulationActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="蓝牙设备清单"
+        android:background="@android:color/holo_red_light"
         android:gravity="center"
         android:padding="@dimen/dp_10"
-        android:textColor="@android:color/white"
-        android:background="@android:color/holo_red_light"/>
+        android:text="蓝牙设备清单"
+        android:textColor="@android:color/white" />
+
     <ListView
         android:id="@+id/activity_mc_simulation_lst_view_devices_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"/>
+        android:layout_weight="2" />
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="开始扫描"
-        android:onClick="scanDevices"/>
+        android:onClick="scanDevices"
+        android:text="开始扫描" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="@dimen/dp_10"
         android:gravity="center">
+
         <TextView
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Activate Status Char"
-            android:gravity="center"/>
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Activate Status Char" />
+
         <ToggleButton
             android:id="@+id/activity_mc_simulation_tg_btn_notification"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:textOn="Notification: ON"
+            android:layout_weight="1"
+            android:textAllCaps="false"
             android:textOff="Notification: OFF"
-            android:textAllCaps="false"/>
+            android:textOn="Notification: ON" />
+
         <tgi.com.tgifreertobtdemo.activity.Led
             android:id="@+id/activity_mc_simulation_led"
             android:layout_width="50dp"
@@ -55,34 +59,56 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="以下为功能测试"
-        android:gravity="center"
-        android:textColor="@android:color/white"
         android:background="@android:color/holo_red_light"
-        android:padding="@dimen/dp_10"/>
+        android:gravity="center"
+        android:padding="@dimen/dp_10"
+        android:text="以下为功能测试"
+        android:textColor="@android:color/white" />
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:onClick="sendStopCommand"
         android:text="待机"
-        android:onClick="sendStopCommand"/>
+        android:visibility="gone" />
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:onClick="sendActivateCommand"
         android:text="启动"
-        android:onClick="sendActivateCommand"/>
+        android:visibility="gone" />
+
+    <EditText
+        android:id="@+id/activity_mc_simulation_edt_input_command"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入json字符串" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="sendCommand"
+        android:text="发送命令" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="resetCommand"
+        android:text="重置命令" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Logs:"
+        android:background="@android:color/holo_red_light"
         android:padding="@dimen/dp_10"
-        android:textColor="@android:color/white"
-        android:background="@android:color/holo_red_light"/>
+        android:text="Logs:"
+        android:textColor="@android:color/white" />
 
     <ListView
         android:id="@+id/activity_mc_simulation_lst_view_log"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5"/>
+        android:layout_weight="5" />
 
 </LinearLayout>

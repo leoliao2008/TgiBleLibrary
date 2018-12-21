@@ -6,11 +6,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,12 +27,23 @@ import tgi.com.tgifreertobtdemo.R;
 
 
 public class MCSimulationActivity extends AppCompatActivity {
+    private ArrayList<Pair<String, String>> mDevices = new ArrayList<>();
+    private ArrayList<String> mLogs = new ArrayList<>();
+    private ArrayAdapter<Pair<String, String>> mDevicesListAdapter;
+    private ArrayAdapter<String> mLogsAdapter;
+    private static final String MASTER_SERVICE_UUID = "0000180d-0000-1000-8000-00805f9b34fb";
+    private static final String FUNCTION_CHAR_UUID = "00002a39-0000-1000-8000-00805f9b34fb";
+    private static final String STATUS_CHAR_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
+    private static final String STATUS_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb";
+    private static final String TEST_LINE="{\"time\":60000,\"message\":\"550FA10100010000000000000007AA\",\"timestamp\":\"04122018071159381\"}";
+    private MCSimulationActivity mThis = this;
     private ListView mLsvDevicesList;
+    private EditText mEdtInputCommand;
     private ListView mLsvLogs;
     private ToggleButton mTgBtnNotification;
     private Led mLed;
     private BleClientManager mManager;
-    private BleClientEventCallback mEventCallback=new BleClientEventCallback(){
+    private BleClientEventCallback mEventCallback = new BleClientEventCallback() {
         @Override
         public void onStartScanningDevice() {
             super.onStartScanningDevice();
@@ -53,8 +66,8 @@ public class MCSimulationActivity extends AppCompatActivity {
         @Override
         public void onDeviceScanned(String name, String address, int rssi, byte[] scanRecord) {
             super.onDeviceScanned(name, address, rssi, scanRecord);
-            Pair<String,String> device=new Pair<>(name,address);
-            if(!mDevices.contains(device)){
+            Pair<String, String> device = new Pair<>(name, address);
+            if (!mDevices.contains(device)) {
                 mDevices.add(device);
                 mDevicesListAdapter.notifyDataSetChanged();
                 mLsvDevicesList.smoothScrollToPosition(Integer.MAX_VALUE);
@@ -92,14 +105,14 @@ public class MCSimulationActivity extends AppCompatActivity {
         public void onCharWritten(String serviceUUID, String charUUID, byte[] writtenValue) {
             super.onCharWritten(serviceUUID, charUUID, writtenValue);
             ProgressDialog.dismiss();
-            updateLogs("写入成功:"+new String(writtenValue));
+            updateLogs("写入成功:" + new String(writtenValue));
         }
 
         @Override
         public void onFailToWriteChar(String serviceUUID, String charUUID, byte[] writeContent) {
             super.onFailToWriteChar(serviceUUID, charUUID, writeContent);
             ProgressDialog.dismiss();
-            updateLogs("写入失败: "+new String(writeContent));
+            updateLogs("写入失败: " + new String(writeContent));
         }
 
         @Override
@@ -127,41 +140,10 @@ public class MCSimulationActivity extends AppCompatActivity {
         public void onError(String msg) {
             super.onError(msg);
             ProgressDialog.dismiss();
-            updateLogs("Error: "+msg);
+            updateLogs("Error: " + msg);
         }
     };
 
-    private void updateLogs(String log) {
-        mLogs.add(log);
-        if(mLogs.size()>50){
-            mLogs.remove(0);
-        }
-        mLogsAdapter.notifyDataSetChanged();
-        mLsvLogs.smoothScrollToPosition(Integer.MAX_VALUE);
-    }
-
-    private String toHexString(byte[] value) {
-        StringBuilder sb=new StringBuilder();
-        for(byte temp:value){
-            String hexString = Integer.toHexString(temp);
-            sb.append("0x");
-            if(hexString.length()<2){
-                sb.append("0");
-            }
-            sb.append(hexString).append(" ");
-        }
-        return sb.toString();
-    }
-
-    private ArrayList<Pair<String,String>> mDevices=new ArrayList<>();
-    private ArrayList<String> mLogs=new ArrayList<>();
-    private ArrayAdapter<Pair<String, String>> mDevicesListAdapter;
-    private ArrayAdapter<String> mLogsAdapter;
-    private static final String MASTER_SERVICE_UUID = "0000180d-0000-1000-8000-00805f9b34fb";
-    private static final String FUNCTION_CHAR_UUID = "00002a39-0000-1000-8000-00805f9b34fb";
-    private static final String STATUS_CHAR_UUID = "00002a37-0000-1000-8000-00805f9b34fb";
-    private static final String STATUS_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb";
-    private MCSimulationActivity mThis=this;
 
     public static void start(Context context) {
         Intent starter = new Intent(context, MCSimulationActivity.class);
@@ -174,6 +156,7 @@ public class MCSimulationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_mcsimulation);
 
         initViews();
+        initData();
         initDeviceList();
         initLogList();
         initBtManager();
@@ -181,18 +164,22 @@ public class MCSimulationActivity extends AppCompatActivity {
 
     }
 
+    private void initData() {
+        mEdtInputCommand.setText(TEST_LINE);
+    }
+
     private void initListeners() {
         mTgBtnNotification.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mTgBtnNotification.isChecked()){
+                if (mTgBtnNotification.isChecked()) {
                     mManager.registerNotification(
                             mThis,
                             MASTER_SERVICE_UUID,
                             STATUS_CHAR_UUID,
                             STATUS_DESCRIPTOR_UUID
                     );
-                }else {
+                } else {
                     mManager.unRegisterNotification(
                             mThis,
                             MASTER_SERVICE_UUID,
@@ -206,7 +193,7 @@ public class MCSimulationActivity extends AppCompatActivity {
     }
 
     private void initBtManager() {
-        mManager=BleClientManager.getInstance();
+        mManager = BleClientManager.getInstance();
         mManager.setupEventCallback(mEventCallback);
     }
 
@@ -222,18 +209,32 @@ public class MCSimulationActivity extends AppCompatActivity {
         mManager.unRegisterReceiver(this);
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(hasFocus){
+            View decorView = getWindow().getDecorView();
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|
+                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|
+                            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            );
+        }
+    }
+
     private void initViews() {
-        mLsvDevicesList=findViewById(R.id.activity_mc_simulation_lst_view_devices_list);
-        mLsvLogs=findViewById(R.id.activity_mc_simulation_lst_view_log);
-        mTgBtnNotification=findViewById(R.id.activity_mc_simulation_tg_btn_notification);
-        mLed=findViewById(R.id.activity_mc_simulation_led);
+        mLsvDevicesList = findViewById(R.id.activity_mc_simulation_lst_view_devices_list);
+        mLsvLogs = findViewById(R.id.activity_mc_simulation_lst_view_log);
+        mTgBtnNotification = findViewById(R.id.activity_mc_simulation_tg_btn_notification);
+        mEdtInputCommand=findViewById(R.id.activity_mc_simulation_edt_input_command);
+        mLed = findViewById(R.id.activity_mc_simulation_led);
     }
 
     private void initLogList() {
         mLogsAdapter = new ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_list_item_1,
-                mLogs){
+                mLogs) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -246,12 +247,13 @@ public class MCSimulationActivity extends AppCompatActivity {
 
     }
 
+
     private void initDeviceList() {
         mDevicesListAdapter = new ArrayAdapter<Pair<String, String>>(
                 this,
                 android.R.layout.simple_list_item_1,
                 mDevices
-        ){
+        ) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
@@ -276,15 +278,37 @@ public class MCSimulationActivity extends AppCompatActivity {
                         mManager.disconnectDevice(mThis);
                     }
                 });
-                mManager.connectDevice(mThis,device.second);
+                mManager.connectDevice(mThis, device.second);
             }
         });
 
     }
 
+    private void updateLogs(String log) {
+        mLogs.add(log);
+        if (mLogs.size() > 50) {
+            mLogs.remove(0);
+        }
+        mLogsAdapter.notifyDataSetChanged();
+        mLsvLogs.smoothScrollToPosition(Integer.MAX_VALUE);
+    }
+
+    private String toHexString(byte[] value) {
+        StringBuilder sb = new StringBuilder();
+        for (byte temp : value) {
+            String hexString = Integer.toHexString(temp);
+            sb.append("0x");
+            if (hexString.length() < 2) {
+                sb.append("0");
+            }
+            sb.append(hexString).append(" ");
+        }
+        return sb.toString();
+    }
+
     public void sendStopCommand(View view) {
-//        String cmd="550FA10000000000000000010006AA";
-        String cmd="Stop MC Device. 5 4 3 2 1";
+        //        String cmd="550FA10000000000000000010006AA";
+        String cmd = "Stop MC Device. 5 4 3 2 1";
         mManager.writeBtChar(
                 mThis,
                 MASTER_SERVICE_UUID,
@@ -295,8 +319,8 @@ public class MCSimulationActivity extends AppCompatActivity {
     }
 
     public void sendActivateCommand(View view) {
-//        String cmd="550FA10100010000000000000007AA";
-        String cmd="Start MC Device. 1 2 3 4 5";
+        //        String cmd="550FA10100010000000000000007AA";
+        String cmd = "Start MC Device. 1 2 3 4 5";
         mManager.writeBtChar(
                 mThis,
                 MASTER_SERVICE_UUID,
@@ -308,5 +332,23 @@ public class MCSimulationActivity extends AppCompatActivity {
 
     public void scanDevices(View view) {
         mManager.startScanningDevices(mThis);
+    }
+
+    public void sendCommand(View view) {
+        String s = mEdtInputCommand.getText().toString().trim();
+        if(TextUtils.isEmpty(s)){
+            return;
+        }
+        mManager.writeBtChar(
+                mThis,
+                MASTER_SERVICE_UUID,
+                FUNCTION_CHAR_UUID,
+                s.getBytes()
+        );
+
+    }
+
+    public void resetCommand(View view) {
+        mEdtInputCommand.setText(TEST_LINE);
     }
 }
